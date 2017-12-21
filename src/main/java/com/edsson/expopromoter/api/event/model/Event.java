@@ -1,4 +1,4 @@
-package com.edsson.expopromoter.api.user.model;
+package com.edsson.expopromoter.api.event.model;
 
 import com.edsson.expopromoter.api.core.model.BaseModel;
 import com.edsson.expopromoter.api.ticket.model.Ticket;

@@ -1,4 +1,4 @@
-package com.edsson.expopromoter.api.user.repository;
+package com.edsson.expopromoter.api.ticket.repository;
 
 import com.edsson.expopromoter.api.ticket.model.Ticket;
 import org.springframework.data.repository.CrudRepository;

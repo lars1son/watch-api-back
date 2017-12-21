@@ -31,6 +31,9 @@ public class User extends BaseModel {
     @Email
     private String email;
 
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
     @ElementCollection(targetClass = Role.class, fetch = FetchType.EAGER)
     @CollectionTable(name="user_roles", joinColumns = @JoinColumn(name = "id"))
     private Set<Role> roles = new TreeSet<>();
@@ -91,5 +94,13 @@ public class User extends BaseModel {
 
     public void setTickets(List<Ticket> tickets) {
         this.tickets = tickets;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 }

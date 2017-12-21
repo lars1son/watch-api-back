@@ -1,6 +1,6 @@
-package com.edsson.expopromoter.api.user.repository;
+package com.edsson.expopromoter.api.event.repository;
 
-import com.edsson.expopromoter.api.user.model.Event;
+import com.edsson.expopromoter.api.event.model.Event;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,7 +1,7 @@
-package com.edsson.expopromoter.api.user.service;
+package com.edsson.expopromoter.api.ticket.service;
 
 import com.edsson.expopromoter.api.ticket.model.Ticket;
-import com.edsson.expopromoter.api.user.repository.TicketRepository;
+import com.edsson.expopromoter.api.ticket.repository.TicketRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

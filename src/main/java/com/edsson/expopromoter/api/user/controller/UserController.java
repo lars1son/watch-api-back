@@ -31,6 +31,8 @@ public class UserController {
         this.service = service;
     }
 
+    // TODO: add logic to include only contacts or related users to requester
+
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<User> getUser(@PathVariable(name = "id") String id) {
         User u = service.findOneById(id);
