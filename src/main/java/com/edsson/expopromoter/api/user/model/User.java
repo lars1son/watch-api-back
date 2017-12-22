@@ -3,6 +3,7 @@ package com.edsson.expopromoter.api.user.model;
 import com.edsson.expopromoter.api.ticket.model.Ticket;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.edsson.expopromoter.api.core.model.BaseModel;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.validator.constraints.Email;
 
@@ -43,7 +44,8 @@ public class User extends BaseModel {
     @JsonIgnore
     private UserType userType;
 
-    @OneToMany(targetEntity = Ticket.class, mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Ticket> tickets;
 
     public User() {}

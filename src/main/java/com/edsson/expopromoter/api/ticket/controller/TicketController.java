@@ -10,7 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Set;
+import java.util.List;
 
 @SuppressWarnings("unused")
 @RestController
@@ -27,16 +27,16 @@ public class TicketController {
         this.userService = userService;
     }
 
-    // TODO: finish
-
     @GetMapping(value = "/my", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Set<Ticket>> getUser(@RequestAttribute("user") User requestUser) {
+    public ResponseEntity<List<Ticket>> getUser(@RequestAttribute("user") User requestUser) {
         User u = userService.findOneById(requestUser.getId());
 
         if (u == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        return null;
+        List<Ticket> tickets = u.getTickets();
+
+        return new ResponseEntity<List<Ticket>>(tickets, HttpStatus.OK);
     }
 }

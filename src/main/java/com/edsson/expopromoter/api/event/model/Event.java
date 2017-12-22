@@ -2,6 +2,8 @@ package com.edsson.expopromoter.api.event.model;
 
 import com.edsson.expopromoter.api.core.model.BaseModel;
 import com.edsson.expopromoter.api.ticket.model.Ticket;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
@@ -18,6 +20,8 @@ public class Event extends BaseModel {
     @GenericGenerator(name = "system-uuid", strategy = "uuid2")
     private String id;
 
+    @JsonIgnore
+    @JsonManagedReference
     @OneToMany(targetEntity = Ticket.class, mappedBy = "event", cascade = CascadeType.ALL)
     private List<Ticket> tickets;
 

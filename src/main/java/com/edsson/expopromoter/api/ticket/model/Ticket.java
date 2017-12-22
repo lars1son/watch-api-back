@@ -3,6 +3,7 @@ package com.edsson.expopromoter.api.ticket.model;
 import com.edsson.expopromoter.api.core.model.BaseModel;
 import com.edsson.expopromoter.api.event.model.Event;
 import com.edsson.expopromoter.api.user.model.User;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
@@ -20,6 +21,7 @@ public class Ticket extends BaseModel {
     private String id;
 
     @OneToOne
+    @JsonBackReference
     @NotNull
     private User user;
 
