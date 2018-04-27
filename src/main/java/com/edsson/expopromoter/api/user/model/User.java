@@ -29,26 +29,30 @@ public class User extends BaseModel {
     @Column(name = "password")
     private String password;
 
+    @NotNull
     @Email
     private String email;
 
     @Column(name = "phone_number")
     private String phoneNumber;
+//
+//    @ElementCollection(targetClass = Role.class, fetch = FetchType.EAGER)
+//    @CollectionTable(name="user_roles", joinColumns = @JoinColumn(name = "id"))
+//    private Set<Role> roles = new TreeSet<>();
 
-    @ElementCollection(targetClass = Role.class, fetch = FetchType.EAGER)
-    @CollectionTable(name="user_roles", joinColumns = @JoinColumn(name = "id"))
-    private Set<Role> roles = new TreeSet<>();
-
-    @Column(name = "user_type")
+    @Column(name = "role")
     @Enumerated(EnumType.ORDINAL)
     @JsonIgnore
-    private UserType userType;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id")
+    private RoleDAO userType;
 
     @JsonManagedReference
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Ticket> tickets;
 
     public User() {}
+
 
     public String getId() {
         return id;
@@ -74,19 +78,11 @@ public class User extends BaseModel {
         this.email = email;
     }
 
-    public Set<Role> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(Set<Role> roles) {
-        this.roles = roles;
-    }
-
-    public UserType getUserType() {
+    public RoleDAO getRole() {
         return userType;
     }
 
-    public void setUserType(UserType userType) {
+    public void setRole(RoleDAO userType) {
         this.userType = userType;
     }
 

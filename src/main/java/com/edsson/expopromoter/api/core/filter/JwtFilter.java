@@ -40,8 +40,17 @@ public class JwtFilter extends GenericFilterBean {
         Set<String> allowedPaths = new TreeSet<>();
         allowedPaths.add("/users/create");
         allowedPaths.add("/login");
-
-        if (allowedPaths.contains(httpRequest.getRequestURI())) {
+//        allowedPaths.add("/swagger-ui.html");
+//        allowedPaths.add("/webjars/springfox-swagger-ui/springfox.css");
+//        allowedPaths.add("/webjars/springfox-swagger-ui/springfox.js");
+//        allowedPaths.add("/webjars/springfox-swagger-ui/swagger-ui-standalone-preset.js");
+//        allowedPaths.add("/swagger-resources/configuration/ui");
+//        allowedPaths.add("/swagger-resources/configuration/security");
+//        allowedPaths.add("/swagger-resources");
+        if(httpRequest.getRequestURI().contains("swagger")){
+            return;
+        }
+        if (allowedPaths.contains(httpRequest.getRequestURI()) ) {
             filterChain.doFilter(httpRequest, res);
             return;
         }

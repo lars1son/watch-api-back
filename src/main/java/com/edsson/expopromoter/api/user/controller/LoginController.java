@@ -6,6 +6,8 @@ import com.edsson.expopromoter.api.user.model.User;
 import com.edsson.expopromoter.api.user.request.LoginRequest;
 import com.edsson.expopromoter.api.user.request.ResetPasswordRequest;
 import com.edsson.expopromoter.api.user.service.UserService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -22,6 +24,7 @@ import java.util.Map;
 @SuppressWarnings("unused")
 @RestController
 @RequestMapping("/login")
+@Api(value = "Description of value", description = "This API provides the capability to login user", produces = "application/json")
 public class LoginController {
 
     private final JwtUtil jwtUtil;
@@ -34,6 +37,7 @@ public class LoginController {
     }
 
     @SuppressWarnings("unused")
+    @ApiOperation(value = "Make login method", produces = "application/json")
     @PostMapping(value = "", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<User> login(@Valid @RequestBody LoginRequest loginRequest) {
         //Try to login as user

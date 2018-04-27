@@ -6,13 +6,13 @@ import java.util.TreeSet;
 public class Credential {
     private String id;
     private String email;
-    private Set<Role> roles = new TreeSet<>();
+    private RoleDAO roles;
 
     public Credential(User user) {
         if (user != null) {
             this.id = user.getId();
             this.email = user.getEmail();
-            this.roles = user.getRoles();
+            this.roles = user.getRole();
         }
     }
 
@@ -32,11 +32,11 @@ public class Credential {
         this.email = email;
     }
 
-    public Set<Role> getRoles() {
+    public RoleDAO getRoles() {
         return roles;
     }
 
-    public void setRoles(Set<Role> roles) {
+    public void setRoles(RoleDAO roles) {
         this.roles = roles;
     }
 }

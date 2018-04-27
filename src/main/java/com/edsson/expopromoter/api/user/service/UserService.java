@@ -33,7 +33,13 @@ public class UserService {
         }
         return null;
     }
-
+    public User getUser(String email){
+        User u = repository.findOneByEmail(email);
+        if (u != null) {
+                return u;
+        }
+        return null;
+    }
     public User findOneById(String id) {
         return repository.findOne(id);
     }

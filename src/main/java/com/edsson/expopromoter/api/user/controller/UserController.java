@@ -3,7 +3,6 @@ package com.edsson.expopromoter.api.user.controller;
 import com.edsson.expopromoter.api.core.filter.RolesAllowed;
 import com.edsson.expopromoter.api.user.model.Role;
 import com.edsson.expopromoter.api.user.model.User;
-import com.edsson.expopromoter.api.user.model.UserType;
 import com.edsson.expopromoter.api.user.request.CreateUserRequest;
 import com.edsson.expopromoter.api.user.request.ResetPasswordRequest;
 import com.edsson.expopromoter.api.user.service.UserService;
@@ -55,7 +54,7 @@ public class UserController {
         return new ResponseEntity<>(u, HttpStatus.OK);
     }
 
-    @SuppressWarnings("unused")
+
     @PostMapping(value = "/create", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createUser(@RequestBody CreateUserRequest request) {
         User u = new User();
