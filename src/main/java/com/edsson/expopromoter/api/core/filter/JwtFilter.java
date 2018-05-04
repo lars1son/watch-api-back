@@ -1,11 +1,10 @@
 package com.edsson.expopromoter.api.core.filter;
 
 import com.edsson.expopromoter.api.core.service.JwtUtil;
-import com.edsson.expopromoter.api.user.model.User;
-import com.edsson.expopromoter.api.user.service.UserService;
+import com.edsson.expopromoter.api.model.User;
+import com.edsson.expopromoter.api.service.UserService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.GenericFilterBean;
 
@@ -40,6 +39,8 @@ public class JwtFilter extends GenericFilterBean {
         Set<String> allowedPaths = new TreeSet<>();
         allowedPaths.add("/users/create");
         allowedPaths.add("/login");
+        allowedPaths.add("/auth/registration");
+        allowedPaths.add("/auth/test");
 //        allowedPaths.add("/swagger-ui.html");
 //        allowedPaths.add("/webjars/springfox-swagger-ui/springfox.css");
 //        allowedPaths.add("/webjars/springfox-swagger-ui/springfox.js");
@@ -47,9 +48,9 @@ public class JwtFilter extends GenericFilterBean {
 //        allowedPaths.add("/swagger-resources/configuration/ui");
 //        allowedPaths.add("/swagger-resources/configuration/security");
 //        allowedPaths.add("/swagger-resources");
-        if(httpRequest.getRequestURI().contains("swagger")){
-            return;
-        }
+//        if(httpRequest.getRequestURI().contains("swagger")){
+//            return;
+//        }
         if (allowedPaths.contains(httpRequest.getRequestURI()) ) {
             filterChain.doFilter(httpRequest, res);
             return;

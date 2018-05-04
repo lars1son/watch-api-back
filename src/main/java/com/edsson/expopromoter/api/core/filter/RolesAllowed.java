@@ -1,6 +1,6 @@
 package com.edsson.expopromoter.api.core.filter;
 
-import com.edsson.expopromoter.api.user.model.Role;
+import com.edsson.expopromoter.api.model.Role;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

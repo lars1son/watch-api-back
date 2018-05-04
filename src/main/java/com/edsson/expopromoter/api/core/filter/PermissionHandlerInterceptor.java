@@ -1,13 +1,14 @@
 package com.edsson.expopromoter.api.core.filter;
 
-import com.edsson.expopromoter.api.user.model.Role;
-import com.edsson.expopromoter.api.user.model.User;
+import com.edsson.expopromoter.api.model.Role;
+import com.edsson.expopromoter.api.model.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -17,7 +18,7 @@ public class PermissionHandlerInterceptor extends HandlerInterceptorAdapter {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-
+        System.out.println("=====================================================================================");
         if (!(handler instanceof HandlerMethod)) {
             return true;
         }
@@ -42,23 +43,26 @@ public class PermissionHandlerInterceptor extends HandlerInterceptorAdapter {
             response.sendError(HttpStatus.FORBIDDEN.value());
             return false;
         }
-        Set<Role> currentUserRoles = currentUser.getRoles();
+
+        //Todo: discover next code
+//        Set<Role> currentUserRoles = new HashSet<>();
+//        currentUserRoles.add(currentUser.getRole().getRole());
 
         // If permission annotation is on class level.
-        if (classAnnotation != null) {
-            if (!hasAtLeastOneRole(currentUserRoles, classAnnotation.roles())) {
-                response.sendError(HttpStatus.FORBIDDEN.value(), "Unavailable request for role: " + currentUser.getRoles());
-                return false;
-            }
-        }
-
-        // If permission annotation is on method level.
-        if (methodAnnotation != null) {
-            if (!hasAtLeastOneRole(currentUserRoles, methodAnnotation.roles())) {
-                response.sendError(HttpStatus.FORBIDDEN.value(), "Unavailable request for role: " + currentUser.getRoles());
-                return false;
-            }
-        }
+//        if (classAnnotation != null) {
+//            if (!hasAtLeastOneRole(currentUserRoles, classAnnotation.roles())) {
+//                response.sendError(HttpStatus.FORBIDDEN.value(), "Unavailable request for role: " + currentUser.getRoles());
+//                return false;
+//            }
+//        }
+//
+//        // If permission annotation is on method level.
+//        if (methodAnnotation != null) {
+//            if (!hasAtLeastOneRole(currentUserRoles, methodAnnotation.roles())) {
+//                response.sendError(HttpStatus.FORBIDDEN.value(), "Unavailable request for role: " + currentUser.getRoles());
+//                return false;
+//            }
+//        }
 
         // else continue to controller.
         return true;

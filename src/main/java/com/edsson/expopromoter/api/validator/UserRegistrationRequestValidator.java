@@ -1,7 +1,7 @@
 package com.edsson.expopromoter.api.validator;
 
-import com.edsson.expopromoter.api.user.model.RegistrationRequest;
-import com.edsson.expopromoter.api.user.service.UserService;
+import com.edsson.expopromoter.api.model.RegistrationRequest;
+import com.edsson.expopromoter.api.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
@@ -43,7 +43,7 @@ public class UserRegistrationRequestValidator implements Validator {
     @Override
     public void validate(Object o, Errors errors) {
         RegistrationRequest registrationRequest = (RegistrationRequest) o;
-        ValidationUtils.rejectIfEmptyOrWhitespace(errors, "login", "NotEmpty");
+        ValidationUtils.rejectIfEmptyOrWhitespace(errors, "email", "NotEmpty");
         String username = registrationRequest.getEmail();
         if (!errors.hasFieldErrors("email")){
             if (username.length() < MIN_LOGIN_SIZE || username.length() > MAX_LOGIN_SIZE) {
