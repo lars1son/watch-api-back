@@ -1,20 +1,28 @@
 package com.edsson.expopromoter.api.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
+import com.edsson.expopromoter.api.config.RolesConfiguration;
+import com.edsson.expopromoter.api.context.UserContext;
+import com.edsson.expopromoter.api.request.RegistrationRequest;
+import com.edsson.expopromoter.api.model.RoleDAO;
 import com.edsson.expopromoter.api.model.User;
 import com.edsson.expopromoter.api.repository.UserRepository;
 import com.edsson.expopromoter.api.request.LoginRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
 
 @Service
 public class UserService {
 
     private final UserRepository repository;
 
+    private final RoleService roleService;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, RoleService roleService, BCryptPasswordEncoder bCryptPasswordEncoder) {
         this.repository = userRepository;
+        this.roleService=roleService;
+        this.bCryptPasswordEncoder=bCryptPasswordEncoder;
     }
 
     /**
@@ -33,13 +41,16 @@ public class UserService {
         }
         return null;
     }
-    public User getUser(String email){
-        User u = repository.findOneByEmail(email);
-        if (u != null) {
-                return u;
+
+    public UserContext getUser(String email) {
+        User user = repository.findOneByEmail(email);
+        if (user != null) {
+
+            return UserContext.create(user);
         }
         return null;
     }
+
     public User findOneById(String id) {
         return repository.findOne(id);
     }
@@ -48,8 +59,16 @@ public class UserService {
         return repository.save(u);
     }
 
-    public void create(User u) {
-         repository.save(u);
+    public void create(RegistrationRequest registrationRequest) {
+        RoleDAO roleDAO = roleService.findRoleDAOByRole(RolesConfiguration.ROLE_USER);
+        User user = new User();
+        user.setPassword(bCryptPasswordEncoder.encode(registrationRequest.getPassword()));
+        user.setEmail(registrationRequest.getEmail());
+        user.setRole(roleDAO);
+        java.util.Date dt = new java.util.Date();
+//        user.setCreatedAt(dt);
+//        user.setUpdatedAt(dt);
+        repository.save(user);
     }
 }
 

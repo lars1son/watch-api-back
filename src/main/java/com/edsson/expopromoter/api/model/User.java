@@ -45,20 +45,15 @@ public class User extends BaseModel {
 
     @JsonManagedReference
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Ticket> tickets;
+    private List<TicketDAO> tickets;
+
+
+
 
     public User() {}
 
-    public User(String password, String email) {
-        this.password = password;
-        this.email = email;
-    }
 
-    public User(String email, String password, RoleDAO roleUser) {
-        this.password=password;
-        this.email=email;
-        this.roleDAO=roleUser;
-    }
+
 
     public Long getId() {
         return id;
@@ -89,11 +84,11 @@ public class User extends BaseModel {
         this.roleDAO = userType;
     }
 
-    public List<Ticket> getTickets() {
+    public List<TicketDAO> getTickets() {
         return tickets;
     }
 
-    public void setTickets(List<Ticket> tickets) {
+    public void setTickets(List<TicketDAO> tickets) {
         this.tickets = tickets;
     }
 

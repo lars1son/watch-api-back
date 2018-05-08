@@ -33,6 +33,9 @@ public class JsonUser {
         return JsonUser.from(UserContext.create(userDAO));
     }
 
+    public static JsonUser from(String email, String password){
+        return new JsonUser(email, 12,password);
+    }
     public long getId() {
         return id;
     }

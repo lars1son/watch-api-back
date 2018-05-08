@@ -1,6 +1,6 @@
 package com.edsson.expopromoter.api.validator;
 
-import com.edsson.expopromoter.api.model.RegistrationRequest;
+import com.edsson.expopromoter.api.request.RegistrationRequest;
 import com.edsson.expopromoter.api.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

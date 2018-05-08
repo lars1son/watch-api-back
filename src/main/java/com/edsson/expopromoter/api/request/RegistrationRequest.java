@@ -1,5 +1,8 @@
-package com.edsson.expopromoter.api.model;
+package com.edsson.expopromoter.api.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RegistrationRequest {
 
     private String password;

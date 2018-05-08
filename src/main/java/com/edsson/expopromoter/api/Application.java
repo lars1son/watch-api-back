@@ -41,4 +41,6 @@ public class Application extends SpringBootServletInitializer {
     public MappedInterceptor PermissionHandlerInterceptor() {
         return new MappedInterceptor(null, new PermissionHandlerInterceptor());
     }
+
+
 }

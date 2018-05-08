@@ -3,14 +3,16 @@ package com.edsson.expopromoter.api.context;
 import com.edsson.expopromoter.api.model.RoleDAO;
 import com.edsson.expopromoter.api.model.User;
 
+import java.util.Date;
+
 public class UserContext {
 
     private Long id;
     private String email;
     private String passwordHash;
     private String phoneNumber;
-    private String createdAt;
-    private String updatedAt;
+    private Date createdAt;
+    private Date updatedAt;
     private RoleDAO role;
 
     private long expiration;
@@ -26,10 +28,18 @@ public class UserContext {
         userContext.email = userDAO.getEmail();
         userContext.passwordHash = userDAO.getPassword();
         userContext.role=userDAO.getRole();
+        userContext.createdAt=userDAO.getCreatedAt();
+        userContext.updatedAt=userDAO.getUpdatedAt();
+        userContext.phoneNumber=userDAO.getPhoneNumber();
         return userContext;
     }
 
-//    public UserDAO toUserDAO(){
+    public UserContext(String email, String passwordHash) {
+        this.email = email;
+        this.passwordHash = passwordHash;
+    }
+
+    //    public UserDAO toUserDAO(){
 //        UserDAO userDAO = new UserDAO();
 //        userDAO.setFirstName(firstName);
 //        userDAO.setLastName(secondName);
