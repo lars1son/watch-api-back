@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CreateEventRequest {
 
+    private String userEmail;
+
+
     private String imageBase64;
     private String dateStart;
     private String name;
@@ -14,6 +17,15 @@ public class CreateEventRequest {
     private String description;
     private String agenda;
     private String contacts;
+    private String ticketUrl;
+
+    public String getTicketUrl() {
+        return ticketUrl;
+    }
+
+    public void setTicketUrl(String ticketUrl) {
+        this.ticketUrl = ticketUrl;
+    }
 
     public String getImageBase64() {
         return imageBase64;
@@ -85,5 +97,13 @@ public class CreateEventRequest {
 
     public void setContacts(String contacts) {
         this.contacts = contacts;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 }

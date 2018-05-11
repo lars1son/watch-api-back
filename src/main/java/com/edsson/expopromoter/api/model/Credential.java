@@ -1,15 +1,17 @@
 package com.edsson.expopromoter.api.model;
 
+import com.edsson.expopromoter.api.context.UserContext;
+
 public class Credential {
     private Long id;
     private String email;
-    private RoleDAO roles;
+    private String role;
 
-    public Credential(User user) {
+    public Credential(UserContext user) {
         if (user != null) {
-            this.id = user.getId();
+            this.id = user.getUserId();
             this.email = user.getEmail();
-            this.roles = user.getRole();
+            this.role= user.getRole().getRole();
         }
     }
 
@@ -29,11 +31,11 @@ public class Credential {
         this.email = email;
     }
 
-    public RoleDAO getRoles() {
-        return roles;
+    public String  getRoles() {
+        return role;
     }
 
-    public void setRoles(RoleDAO roles) {
-        this.roles = roles;
+    public void setRoles(String roles) {
+        this.role  = roles ;
     }
 }

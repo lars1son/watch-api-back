@@ -8,9 +8,14 @@ public class SystemConfigurationKeys {
         public final static String PATH = "default_event_image_path";
     }
 
+    public static final class DefaultEventURL{
+        public final static String URL = "default_event_url";
+    }
+
 
     public static final String[] SYSTEM_CONFIGURATION_KEYS = {
             DefaultImagePath.PATH
+            , DefaultEventURL.URL
     };
 
     public static String[] getSystemConfigurationKeys(){

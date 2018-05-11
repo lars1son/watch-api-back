@@ -18,6 +18,9 @@ public class EventDAO  extends BaseModel{
     @Column(name = "name", nullable = false )
     private String name;
 
+    @Basic
+    @Column(name = "ticket_url", nullable = false )
+    private String ticketUrl;
 
     @Basic
     @Column(name = "date_start", nullable = false)
@@ -29,7 +32,7 @@ public class EventDAO  extends BaseModel{
 
     @Basic
     @Column(name = "photo_path", nullable = true)
-    private Integer photoPath;
+    private String photoPath;
     @Basic
     @Column(name = "event_website", nullable = true )
     private String eventWebsite;
@@ -50,8 +53,22 @@ public class EventDAO  extends BaseModel{
     @OneToMany(mappedBy = "eventsByEventId", cascade = CascadeType.ALL)
     private List<TicketDAO> tickets;
 
+//    @Column(name = "userCreatorId", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_creator_id", referencedColumnName = "id", nullable = false)
+    private User userCreatorId;
+
 
     public EventDAO() {
+    }
+
+
+    public User getUserCreatorId() {
+        return userCreatorId;
+    }
+
+    public void setUserCreatorId(User userCreatorId) {
+        this.userCreatorId = userCreatorId;
     }
 
     public int getId() {
@@ -62,6 +79,22 @@ public class EventDAO  extends BaseModel{
         this.id = id;
     }
 
+
+    public String getTicketUrl() {
+        return ticketUrl;
+    }
+
+    public void setTicketUrl(String ticketUrl) {
+        this.ticketUrl = ticketUrl;
+    }
+
+    public List<TicketDAO> getTickets() {
+        return tickets;
+    }
+
+    public void setTickets(List<TicketDAO> tickets) {
+        this.tickets = tickets;
+    }
 
     public String getName() {
         return name;
@@ -90,11 +123,11 @@ public class EventDAO  extends BaseModel{
         this.dateEnd = dateEnd;
     }
 
-    public Integer getPhotoPath() {
+    public String getPhotoPath() {
         return photoPath;
     }
 
-    public void setPhotoPath(Integer photoPath) {
+    public void setPhotoPath(String photoPath) {
         this.photoPath = photoPath;
     }
 
@@ -149,23 +182,24 @@ public class EventDAO  extends BaseModel{
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+//        if (this == o) return true;
+//        if (o == null || getClass() != o.getClass()) return false;
 
         EventDAO that = (EventDAO) o;
-
-        if (id != that.id) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-
-        if (dateStart != null ? !dateStart.equals(that.dateStart) : that.dateStart != null) return false;
-        if (dateEnd != null ? !dateEnd.equals(that.dateEnd) : that.dateEnd != null) return false;
-        if (photoPath != null ? !photoPath.equals(that.photoPath) : that.photoPath != null) return false;
-        if (eventWebsite != null ? !eventWebsite.equals(that.eventWebsite) : that.eventWebsite != null) return false;
-        if (eventLocation != null ? !eventLocation.equals(that.eventLocation) : that.eventLocation != null)
-            return false;
-        if (description != null ? !description.equals(that.description) : that.description != null) return false;
-        if (agenda != null ? !agenda.equals(that.agenda) : that.agenda != null) return false;
-        if (contacts != null ? !contacts.equals(that.contacts) : that.contacts != null) return false;
+        if (this.getName()!=that.getName()) return false;
+        if (this.userCreatorId!= that.userCreatorId) return false;
+//        if (id != that.id) return false;
+//        if (name != null ? !name.equals(that.name) : that.name != null) return false;
+//
+//        if (dateStart != null ? !dateStart.equals(that.dateStart) : that.dateStart != null) return false;
+//        if (dateEnd != null ? !dateEnd.equals(that.dateEnd) : that.dateEnd != null) return false;
+//        if (photoPath != null ? !photoPath.equals(that.photoPath) : that.photoPath != null) return false;
+//        if (eventWebsite != null ? !eventWebsite.equals(that.eventWebsite) : that.eventWebsite != null) return false;
+//        if (eventLocation != null ? !eventLocation.equals(that.eventLocation) : that.eventLocation != null)
+//            return false;
+//        if (description != null ? !description.equals(that.description) : that.description != null) return false;
+//        if (agenda != null ? !agenda.equals(that.agenda) : that.agenda != null) return false;
+//        if (contacts != null ? !contacts.equals(that.contacts) : that.contacts != null) return false;
 
 
         return true;

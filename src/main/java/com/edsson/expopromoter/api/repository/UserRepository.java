@@ -8,5 +8,5 @@ import com.edsson.expopromoter.api.model.User;
 public interface UserRepository extends CrudRepository<User, String> {
 
     User findOneByEmail(String email);
-
+    User findOneById(Long id);
 }

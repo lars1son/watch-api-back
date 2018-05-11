@@ -38,23 +38,49 @@ public class User extends BaseModel {
 //    @Column(name = "role")
 //    @Enumerated(EnumType.ORDINAL)
     @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
 //    @JoinColumn(name = "id",insertable = false,updatable = false)
     @JoinColumn(name = "role", referencedColumnName = "id", nullable = false)
     private RoleDAO roleDAO;
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<TicketDAO> tickets;
 
+    @JsonManagedReference
+    @OneToMany(mappedBy = "userCreatorId", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<EventDAO> eventDAOList;
 
 
 
     public User() {}
 
 
+    public void setId(Long id) {
+        this.id = id;
+    }
 
+    public RoleDAO getRoleDAO() {
+        return roleDAO;
+    }
 
+    public void setRoleDAO(RoleDAO roleDAO) {
+        this.roleDAO = roleDAO;
+    }
+
+    public List<EventDAO> getEventDAOList() {
+        return eventDAOList;
+    }
+
+    public void setEventDAOList(List<EventDAO> eventDAOList) {
+        this.eventDAOList = eventDAOList;
+    }
+    public void addToEventDAOList(EventDAO eventDAO){
+        this.eventDAOList.add(eventDAO);
+    }
+    public void deleteRecordFromEventDAOList(EventDAO eventDAO){
+        this.eventDAOList.remove(eventDAO);
+    }
     public Long getId() {
         return id;
     }

@@ -1,13 +1,17 @@
 package com.edsson.expopromoter.api.controller;
 
+import com.edsson.expopromoter.api.exceptions.EntityAlreadyExistException;
 import com.edsson.expopromoter.api.exceptions.EventBadCredentialsException;
 import com.edsson.expopromoter.api.exceptions.SystemConfigurationException;
-import com.edsson.expopromoter.api.model.EventDAO;
+import com.edsson.expopromoter.api.model.json.JsonUrl;
 import com.edsson.expopromoter.api.operator.ImageOperator;
 import com.edsson.expopromoter.api.request.CreateEventRequest;
 import com.edsson.expopromoter.api.service.EventService;
-import com.edsson.expopromoter.api.service.UserService;
+import javassist.NotFoundException;
+import org.apache.http.HttpResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -15,9 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.sql.Date;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
@@ -131,35 +133,30 @@ public class UserController {
 //            consumes = {ALL_VALUE}
 //    )
 //    @RolesAllowed(roles = {Role.ADMIN,Role.USER})
-//    public JsonTest createTicket(
+//    public JsonUrl createTicket(
 //            @RequestBody(required = false)MultipartFile file,
 //                                 @RequestBody CreateEventRequest line){
 //        System.out.println("====================" );
-//        return new JsonTest(line.getLine());
+//        return new JsonUrl(line.getLine());
 //    }
 
     @RequestMapping(method = RequestMethod.POST,
             consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE},
             value = "/create_event")
-    public void createTicket(@RequestBody CreateEventRequest createEventRequest) throws EventBadCredentialsException, ParseException, FileNotFoundException, SystemConfigurationException, IOException {
-        EventDAO eventDAO = new EventDAO();
-        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss.SSS");
+    public JsonUrl createTicket(@RequestBody CreateEventRequest createEventRequest, HttpResponse response) throws EntityAlreadyExistException, EventBadCredentialsException, ParseException, FileNotFoundException, SystemConfigurationException, IOException, NotFoundException {
+        String url = service.createEventDAO(createEventRequest);
+        response.setStatusCode(200);
 
-        if (createEventRequest.getName() != null && createEventRequest.getDateStart() != null  && createEventRequest.getDateEnd()!=null) {
-            eventDAO.setName(createEventRequest.getName());
-            eventDAO.setDateStart(formatter.parse(createEventRequest.getDateStart()));
-            eventDAO.setDateEnd(formatter.parse(createEventRequest.getDateEnd()));
-
-        }
-        else throw new EventBadCredentialsException("Bad Credentials");
-
-        eventDAO.setAgenda(createEventRequest.getAgenda());
-        eventDAO.setContacts(createEventRequest.getContacts());
-        eventDAO.setDescription(createEventRequest.getDescription());
-        eventDAO.setEventLocation(createEventRequest.getLocation());
-        eventDAO.setEventWebsite(createEventRequest.getWebsite());
-
-        service.create(eventDAO);
-
+        return new JsonUrl(url);
     }
+
+    @RequestMapping(method = RequestMethod.POST,
+            consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE},
+            value = "/update_event")
+    public ResponseEntity<String> updateEvent(@RequestBody CreateEventRequest createEventRequest) throws ParseException, EventBadCredentialsException, NotFoundException {
+        service.update(createEventRequest);
+        return new ResponseEntity<>("Event updated ", HttpStatus.OK);
+    }
+
+
 }
