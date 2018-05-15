@@ -8,6 +8,7 @@ import org.hibernate.validator.constraints.Email;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Set;
 
 @SuppressWarnings("unused")
 @Entity
@@ -44,12 +45,12 @@ public class User extends BaseModel {
     private RoleDAO roleDAO;
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<TicketDAO> tickets;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private Set<TicketDAO> tickets;
 
     @JsonManagedReference
     @OneToMany(mappedBy = "userCreatorId", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<EventDAO> eventDAOList;
+    private Set<EventDAO> eventDAOList;
 
 
 
@@ -68,13 +69,16 @@ public class User extends BaseModel {
         this.roleDAO = roleDAO;
     }
 
-    public List<EventDAO> getEventDAOList() {
+    public Set<EventDAO> getEventDAOList() {
         return eventDAOList;
     }
 
-    public void setEventDAOList(List<EventDAO> eventDAOList) {
-        this.eventDAOList = eventDAOList;
+    public void addToTicketDAOList(TicketDAO ticket){
+        this.tickets.add(ticket);
     }
+//    public void setEventDAOList(List<EventDAO> eventDAOList) {
+//        this.eventDAOList = eventDAOList;
+//    }
     public void addToEventDAOList(EventDAO eventDAO){
         this.eventDAOList.add(eventDAO);
     }
@@ -110,11 +114,11 @@ public class User extends BaseModel {
         this.roleDAO = userType;
     }
 
-    public List<TicketDAO> getTickets() {
+    public Set<TicketDAO> getTickets() {
         return tickets;
     }
 
-    public void setTickets(List<TicketDAO> tickets) {
+    public void setTickets(Set<TicketDAO> tickets) {
         this.tickets = tickets;
     }
 

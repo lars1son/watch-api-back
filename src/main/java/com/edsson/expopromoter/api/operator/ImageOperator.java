@@ -23,9 +23,9 @@ public class ImageOperator {
         this.systemConfigurationService = systemConfigurationService;
     }
 
-    public String saveImage(String imageBase64, int id) throws IOException, SystemConfigurationException {
-        String crntImage = imageBase64;
-        String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\" + id;
+    public String saveImage(String imageBase64, String path) throws IOException, SystemConfigurationException {
+//        String crntImage = imageBase64;
+//         path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\" + id;
         File files = new File(path);
         if (!files.exists()) {
             if (files.mkdirs()) {
@@ -34,8 +34,8 @@ public class ImageOperator {
                 System.out.println("Failed to create multiple directories!");
             }
         }
-        byte[] data = Base64.decodeBase64(crntImage);
-        path = path + "\\" + id + "_" + FileInfoService.findFileExtension(crntImage);
+        byte[] data = Base64.decodeBase64(imageBase64);
+
 
         try (OutputStream stream = new FileOutputStream(path)) {
             stream.write(data);

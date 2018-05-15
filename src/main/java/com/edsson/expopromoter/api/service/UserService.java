@@ -4,14 +4,22 @@ import com.edsson.expopromoter.api.config.RolesConfiguration;
 import com.edsson.expopromoter.api.context.UserContext;
 import com.edsson.expopromoter.api.exceptions.EntityAlreadyExistException;
 import com.edsson.expopromoter.api.model.RoleDAO;
+import com.edsson.expopromoter.api.model.TicketDAO;
 import com.edsson.expopromoter.api.model.User;
+import com.edsson.expopromoter.api.model.json.JsonTicket;
+import com.edsson.expopromoter.api.operator.ImageOperator;
 import com.edsson.expopromoter.api.repository.UserRepository;
 import com.edsson.expopromoter.api.request.LoginRequest;
 import com.edsson.expopromoter.api.request.RegisterDeviceRequest;
 import com.edsson.expopromoter.api.request.RegistrationRequest;
+import org.apache.catalina.servlet4preview.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class UserService {
@@ -20,11 +28,12 @@ public class UserService {
 
     private final RoleService roleService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
-
+    private final ImageOperator imageOperator;
     @Autowired
-    public UserService(UserRepository userRepository, RoleService roleService, BCryptPasswordEncoder bCryptPasswordEncoder) {
+    public UserService(UserRepository userRepository, RoleService roleService, BCryptPasswordEncoder bCryptPasswordEncoder, ImageOperator imageOperator) {
         this.repository = userRepository;
         this.roleService = roleService;
+        this.imageOperator=imageOperator;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
@@ -53,7 +62,11 @@ public class UserService {
         }
         return null;
     }
-    public User findOneByEmail(String email){ return repository.findOneByEmail(email);}
+
+    public User findOneByEmail(String email) {
+        return repository.findOneByEmail(email);
+    }
+
     public User findOneById(Long id) {
         return repository.findOneById(id);
     }
@@ -73,8 +86,7 @@ public class UserService {
 //        user.setUpdatedAt(dt);
         if (repository.findOneByEmail(user.getEmail()) == null) {
             repository.save(user);
-        }
-        else throw new EntityAlreadyExistException("User " + user.getEmail() + "already exists");
+        } else throw new EntityAlreadyExistException("User " + user.getEmail() + "already exists");
     }
 
     public void create(RegisterDeviceRequest registerDeviceRequest) throws EntityAlreadyExistException {
@@ -84,12 +96,23 @@ public class UserService {
         user.setRole(roleDAO);
         if (repository.findOneByEmail(user.getEmail()) == null) {
             repository.save(user);
-        }
-        else throw new EntityAlreadyExistException("User " + user.getEmail() + "already exists");
+        } else throw new EntityAlreadyExistException("User " + user.getEmail() + "already exists");
     }
 
-    public void save(User user){
+    public void save(User user) {
         repository.save(user);
     }
+
+
+    public List<JsonTicket> getAllTickets(HttpServletRequest request) throws IOException {
+        User u = (User) request.getAttribute("user");
+        List<JsonTicket> tickets = new ArrayList<>();
+
+        for (TicketDAO ticketDAO : u.getTickets()) {
+            tickets.add(new JsonTicket(ticketDAO.getId(),ticketDAO.getEventsByEventId().getName(),imageOperator.encodeFileToBase64Binary(ticketDAO.getImagePath())));
+        }
+        return tickets;
+    }
+
 }
 

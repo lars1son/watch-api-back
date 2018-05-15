@@ -3,23 +3,22 @@ package com.edsson.expopromoter.api.model;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 
 @Entity
 @Table(name = "events")
-public class EventDAO  extends BaseModel{
+public class EventDAO extends BaseModel {
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
     @Basic
-    @Column(name = "name", nullable = false )
+    @Column(name = "name", nullable = false)
     private String name;
 
     @Basic
-    @Column(name = "ticket_url", nullable = false )
+    @Column(name = "ticket_url", nullable = false)
     private String ticketUrl;
 
     @Basic
@@ -34,26 +33,26 @@ public class EventDAO  extends BaseModel{
     @Column(name = "photo_path", nullable = true)
     private String photoPath;
     @Basic
-    @Column(name = "event_website", nullable = true )
+    @Column(name = "event_website", nullable = true)
     private String eventWebsite;
     @Basic
-    @Column(name = "event_location", nullable = true )
+    @Column(name = "event_location", nullable = true)
     private String eventLocation;
     @Basic
-    @Column(name = "description", nullable = true )
+    @Column(name = "description", nullable = true)
     private String description;
     @Basic
-    @Column(name = "agenda", nullable = true )
+    @Column(name = "agenda", nullable = true)
     private String agenda;
     @Basic
-    @Column(name = "contacts", nullable = true )
+    @Column(name = "contacts", nullable = true)
     private String contacts;
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "eventsByEventId", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
     private List<TicketDAO> tickets;
 
-//    @Column(name = "userCreatorId", nullable = true)
+    //    @Column(name = "userCreatorId", nullable = true)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_creator_id", referencedColumnName = "id", nullable = false)
     private User userCreatorId;
@@ -103,8 +102,6 @@ public class EventDAO  extends BaseModel{
     public void setName(String name) {
         this.name = name;
     }
-
-
 
 
     public Date getDateStart() {
@@ -176,8 +173,12 @@ public class EventDAO  extends BaseModel{
         this.contacts = contacts;
     }
 
+    public void addTicket(TicketDAO ticket) {
+        if (!getTickets().contains(ticket)) {
+            this.tickets.add(ticket);
+        }
 
-
+    }
 
 
     @Override
@@ -186,8 +187,8 @@ public class EventDAO  extends BaseModel{
 //        if (o == null || getClass() != o.getClass()) return false;
 
         EventDAO that = (EventDAO) o;
-        if (this.getName()!=that.getName()) return false;
-        if (this.userCreatorId!= that.userCreatorId) return false;
+        if (this.getName() != that.getName()) return false;
+        if (this.userCreatorId != that.userCreatorId) return false;
 //        if (id != that.id) return false;
 //        if (name != null ? !name.equals(that.name) : that.name != null) return false;
 //

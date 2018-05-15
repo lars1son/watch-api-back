@@ -41,7 +41,8 @@ public class JwtUtil {
 
     public Claims parseToken(String token) throws SignatureException, IOException, URISyntaxException {
 
-        return Jwts.parser().setSigningKey(secretKeyProvider.getKey()).parseClaimsJws(updateToken(token)).getBody();
+//        return Jwts.parser().setSigningKey(secretKeyProvider.getKey()).parseClaimsJws(updateToken(token)).getBody();
+        return Jwts.parser().setSigningKey(secretKeyProvider.getKey()).parseClaimsJws(token).getBody();
     }
 
     public String tokenFor(UserContext user) throws JwtException {

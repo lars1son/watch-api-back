@@ -3,11 +3,14 @@ package com.edsson.expopromoter.api.controller;
 import com.edsson.expopromoter.api.exceptions.EntityAlreadyExistException;
 import com.edsson.expopromoter.api.exceptions.EventBadCredentialsException;
 import com.edsson.expopromoter.api.exceptions.SystemConfigurationException;
+import com.edsson.expopromoter.api.model.json.JsonTicket;
 import com.edsson.expopromoter.api.model.json.JsonUrl;
 import com.edsson.expopromoter.api.operator.ImageOperator;
 import com.edsson.expopromoter.api.request.CreateEventRequest;
 import com.edsson.expopromoter.api.service.EventService;
+import com.edsson.expopromoter.api.service.UserService;
 import javassist.NotFoundException;
+import org.apache.catalina.servlet4preview.http.HttpServletRequest;
 import org.apache.http.HttpResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,9 +20,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.List;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
@@ -31,11 +36,13 @@ public class UserController {
 
     private final EventService service;
     private final ImageOperator imageOperator;
-
+    private final UserService userService;
     @Autowired
-    public UserController(EventService service, ImageOperator imageOperator) {
+    public UserController(EventService service, ImageOperator imageOperator, UserService userService) {
         this.service = service;
+
         this.imageOperator = imageOperator;
+        this.userService = userService;
     }
 //
 //    // TODO: add logic to include only contacts or related users to requester
@@ -158,5 +165,9 @@ public class UserController {
         return new ResponseEntity<>("Event updated ", HttpStatus.OK);
     }
 
+    @RequestMapping(method = RequestMethod.GET, path = "/show_all_tickets")
+    public List<JsonTicket> getAllTicketsPerUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        return userService.getAllTickets(request);
+    }
 
 }

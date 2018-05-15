@@ -8,6 +8,7 @@ import com.edsson.expopromoter.api.exceptions.SystemConfigurationException;
 import com.edsson.expopromoter.api.model.EventDAO;
 import com.edsson.expopromoter.api.model.User;
 import com.edsson.expopromoter.api.model.json.JsonEventInfo;
+import com.edsson.expopromoter.api.operator.FileInfoService;
 import com.edsson.expopromoter.api.operator.ImageOperator;
 import com.edsson.expopromoter.api.repository.EventRepository;
 import com.edsson.expopromoter.api.request.CreateEventRequest;
@@ -40,7 +41,7 @@ public class EventService {
         return repository.findById(id);
     }
 
-    public void create(EventDAO eventDAO) {
+    public void save(EventDAO eventDAO) {
         repository.save(eventDAO);
     }
 //
@@ -73,8 +74,10 @@ public class EventService {
                 eventDAO.setTicketUrl(createEventRequest.getTicketUrl());
                 eventDAO.setUserCreatorId(user);
                 user.addToEventDAOList(eventDAO);
+                String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\event_" + eventDAO.getId();
+                path = path + "\\" + eventDAO.getName() + "_" + FileInfoService.findFileExtension(createEventRequest.getImageBase64());
 
-                eventDAO.setPhotoPath(imageOperator.saveImage(createEventRequest.getImageBase64(), eventDAO.getId()));
+                eventDAO.setPhotoPath(imageOperator.saveImage(createEventRequest.getImageBase64(),path));
                 userService.save(user);
 
                 eventDAO = repository.findByName(eventDAO.getName());

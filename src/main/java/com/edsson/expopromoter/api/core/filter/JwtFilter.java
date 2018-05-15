@@ -60,7 +60,6 @@ public class JwtFilter extends GenericFilterBean {
                 httpRequest.setAttribute("user_roles", user.get("roles"));
 
                 User u = userService.findOneById(Long.valueOf((Integer)user.get("id")));
-
                 httpRequest.setAttribute("user", u);
 //                httpResponse.setHeader("Token", );
                 filterChain.doFilter(httpRequest, res);
