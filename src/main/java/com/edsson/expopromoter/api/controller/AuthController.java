@@ -155,7 +155,7 @@ public class AuthController {
             return JsonUser.from(userContext);
         }
         else throw new NotFoundException("Device "+ registerDeviceRequest.getDeviceId() + "not exist in Database!");
-
-
     }
+
+
 }

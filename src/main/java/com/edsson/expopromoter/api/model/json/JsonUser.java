@@ -11,31 +11,56 @@ public class JsonUser {
     private long id;
     private String role;
 
+    private String fullName;
+    private String phoneNumber;
+    private String contactEmail;
     public JsonUser() {
 
     }
 
-    public JsonUser(String email, long id, String role) {
+    public JsonUser(String email, long id, String role, String fullName,String phoneNumber, String contactEmail) {
         this.email = email;
         this.id = id;
         this.role = role;
+        this.fullName = fullName;
+        this.phoneNumber=phoneNumber;
+        this.contactEmail=contactEmail;
     }
+
+//    public JsonUser(String email, long id, String role, String password, String fullName) {
+//        this.email = email;
+//        this.id = id;
+//        this.role = role;
+//        this.password = password;
+//        this.fullName = fullName;
+//    }
 
     public static JsonUser from(UserContext userContext) {
         return new JsonUser(
                 userContext.getEmail(),
                 userContext.getUserId(),
-                userContext.getRole().getRole()
+                userContext.getRole().getRole(),
+                userContext.getFullName(),
+                userContext.getPhoneNumber(),
+                userContext.getContactEmail()
+
         );
     }
+//    public static JsonUser fullInfoFrom(UserContext userContext) {
+//        return new JsonUser(
+//                userContext.getEmail(),
+//                userContext.getUserId(),
+//                userContext.getRole().getRole()
+//        );
+//    }
+
+
+
 
     public static JsonUser from(User userDAO) {
         return JsonUser.from(UserContext.create(userDAO));
     }
 
-    public static JsonUser from(String email, String password){
-        return new JsonUser(email, 12,password);
-    }
     public long getId() {
         return id;
     }

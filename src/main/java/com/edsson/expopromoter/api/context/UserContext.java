@@ -14,7 +14,8 @@ public class UserContext {
     private Date createdAt;
     private Date updatedAt;
     private RoleDAO role;
-
+    private String fullName;
+    private String contactEmail;
     private long expiration;
 
 
@@ -31,6 +32,8 @@ public class UserContext {
         userContext.createdAt=userDAO.getCreatedAt();
         userContext.updatedAt=userDAO.getUpdatedAt();
         userContext.phoneNumber=userDAO.getPhoneNumber();
+        userContext.contactEmail=userDAO.getContactEmail();
+        userContext.fullName=userDAO.getFullname();
         return userContext;
     }
 
@@ -53,6 +56,19 @@ public class UserContext {
 //        return userDAO;
 //    }
 
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getContactEmail() {
+        return contactEmail;
+    }
+
+    public void setContactEmail(String contactEmail) {
+        this.contactEmail = contactEmail;
+    }
+
     public Long getUserId() {
         return id;
     }
@@ -73,6 +89,23 @@ public class UserContext {
 //        }
 //        return grantedAuthorities;
 //    }
+
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
 
     public String getEmail() {
         return email;

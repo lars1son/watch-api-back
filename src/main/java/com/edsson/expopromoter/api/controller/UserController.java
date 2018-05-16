@@ -1,24 +1,30 @@
 package com.edsson.expopromoter.api.controller;
 
+import com.edsson.expopromoter.api.context.UserContext;
 import com.edsson.expopromoter.api.exceptions.EntityAlreadyExistException;
 import com.edsson.expopromoter.api.exceptions.EventBadCredentialsException;
+import com.edsson.expopromoter.api.exceptions.RequestValidationException;
 import com.edsson.expopromoter.api.exceptions.SystemConfigurationException;
+import com.edsson.expopromoter.api.model.User;
+import com.edsson.expopromoter.api.model.json.GenericResponse;
 import com.edsson.expopromoter.api.model.json.JsonTicket;
 import com.edsson.expopromoter.api.model.json.JsonUrl;
+import com.edsson.expopromoter.api.model.json.JsonUser;
 import com.edsson.expopromoter.api.operator.ImageOperator;
 import com.edsson.expopromoter.api.request.CreateEventRequest;
+import com.edsson.expopromoter.api.request.UpdatePasswordRequest;
+import com.edsson.expopromoter.api.request.UserUpdateRequest;
 import com.edsson.expopromoter.api.service.EventService;
 import com.edsson.expopromoter.api.service.UserService;
+import com.edsson.expopromoter.api.validator.UpdatePasswordRequestValidator;
 import javassist.NotFoundException;
 import org.apache.catalina.servlet4preview.http.HttpServletRequest;
 import org.apache.http.HttpResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.FileNotFoundException;
@@ -28,6 +34,7 @@ import java.util.List;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @SuppressWarnings("unused")
 @RestController
@@ -37,10 +44,11 @@ public class UserController {
     private final EventService service;
     private final ImageOperator imageOperator;
     private final UserService userService;
+    private final UpdatePasswordRequestValidator updatePasswordRequestValidator;
     @Autowired
-    public UserController(EventService service, ImageOperator imageOperator, UserService userService) {
+    public UserController(EventService service, ImageOperator imageOperator, UpdatePasswordRequestValidator updatePasswordRequestValidator,UserService userService) {
         this.service = service;
-
+        this.updatePasswordRequestValidator=updatePasswordRequestValidator;
         this.imageOperator = imageOperator;
         this.userService = userService;
     }
@@ -150,8 +158,8 @@ public class UserController {
     @RequestMapping(method = RequestMethod.POST,
             consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE},
             value = "/create_event")
-    public JsonUrl createTicket(@RequestBody CreateEventRequest createEventRequest, HttpResponse response) throws EntityAlreadyExistException, EventBadCredentialsException, ParseException, FileNotFoundException, SystemConfigurationException, IOException, NotFoundException {
-        String url = service.createEventDAO(createEventRequest);
+    public JsonUrl createTicket(@RequestBody CreateEventRequest createEventRequest, HttpResponse response,HttpServletRequest request) throws EntityAlreadyExistException, EventBadCredentialsException, ParseException, FileNotFoundException, SystemConfigurationException, IOException, NotFoundException {
+        String url = service.createEventDAO(createEventRequest, (User) request.getAttribute("user"));
         response.setStatusCode(200);
 
         return new JsonUrl(url);
@@ -160,8 +168,8 @@ public class UserController {
     @RequestMapping(method = RequestMethod.POST,
             consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE},
             value = "/update_event")
-    public ResponseEntity<String> updateEvent(@RequestBody CreateEventRequest createEventRequest) throws ParseException, EventBadCredentialsException, NotFoundException {
-        service.update(createEventRequest);
+    public ResponseEntity<String> updateEvent(@RequestBody CreateEventRequest createEventRequest,HttpServletRequest request) throws ParseException, EventBadCredentialsException, NotFoundException {
+        service.update(createEventRequest,request);
         return new ResponseEntity<>("Event updated ", HttpStatus.OK);
     }
 
@@ -169,5 +177,33 @@ public class UserController {
     public List<JsonTicket> getAllTicketsPerUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
         return userService.getAllTickets(request);
     }
+
+
+    @RequestMapping(method = RequestMethod.GET, value = "/update")
+    public GenericResponse updateUser(@RequestBody UserUpdateRequest userUpdateRequest,HttpServletRequest request, HttpResponse response) throws IOException {
+        userService.update(userUpdateRequest.getNewEmail(),userUpdateRequest.getNewPassword(), (User) request.getAttribute("user"));
+        return new GenericResponse("User update success", new String[]{});
+    }
+
+
+    @RequestMapping(
+            value = "/update_password",
+            method = POST,
+            produces = APPLICATION_JSON_VALUE,
+            consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE}
+    )
+    public GenericResponse updatePassword(@RequestBody UpdatePasswordRequest updatePasswordRequest,HttpServletRequest request,
+                               BindingResult bindingResult) throws Exception {
+        updatePasswordRequestValidator.validate(updatePasswordRequest, bindingResult);
+        if (bindingResult.hasErrors()) {
+            throw new RequestValidationException(bindingResult);
+        }
+
+
+        User user = (User) request.getAttribute("user");
+        userService.update(user.getEmail(),updatePasswordRequest.getNewPassword(),user);
+        return new GenericResponse("Password update success", new String[]{});
+    }
+
 
 }

@@ -12,7 +12,7 @@ import java.util.Set;
 
 @SuppressWarnings("unused")
 @Entity
-@Table(name = "user")
+@Table(name = "users")
 @Inheritance(strategy=InheritanceType.TABLE_PER_CLASS)
 public class User extends BaseModel {
 //public class User{
@@ -31,6 +31,10 @@ public class User extends BaseModel {
 
     @Column(name = "phone_number")
     private String phoneNumber;
+    @Column(name = "full_name")
+    private String fullname;
+    @Column(name = "contact_email")
+    private String contactEmail;
 //
 //    @ElementCollection(targetClass = Role.class, fetch = FetchType.EAGER)
 //    @CollectionTable(name="user_roles", joinColumns = @JoinColumn(name = "id"))
@@ -100,6 +104,22 @@ public class User extends BaseModel {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getFullname() {
+        return fullname;
+    }
+
+    public void setFullname(String fullname) {
+        this.fullname = fullname;
+    }
+
+    public String getContactEmail() {
+        return contactEmail;
+    }
+
+    public void setContactEmail(String contactEmail) {
+        this.contactEmail = contactEmail;
     }
 
     public void setEmail(String email) {

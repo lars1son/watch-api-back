@@ -14,6 +14,7 @@ import com.edsson.expopromoter.api.repository.EventRepository;
 import com.edsson.expopromoter.api.request.CreateEventRequest;
 import com.edsson.expopromoter.api.service.system_configuration.SystemConfigurationServiceImpl;
 import javassist.NotFoundException;
+import org.apache.catalina.servlet4preview.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -49,8 +50,8 @@ public class EventService {
 //        return repository.findByName(name);
 //    }
 
-    public String createEventDAO(CreateEventRequest createEventRequest) throws IOException, SystemConfigurationException, ParseException, EntityAlreadyExistException, EventBadCredentialsException, NotFoundException {
-        User user = userService.findOneByEmail(createEventRequest.getUserEmail());
+    public String createEventDAO(CreateEventRequest createEventRequest, User user) throws IOException, SystemConfigurationException, ParseException, EntityAlreadyExistException, EventBadCredentialsException, NotFoundException {
+
         if (user != null) {
             if (repository.findByName(createEventRequest.getName()) == null) {
 
@@ -83,13 +84,15 @@ public class EventService {
                 eventDAO = repository.findByName(eventDAO.getName());
                 return buildUrl(eventDAO.getId());
             } else throw new EntityAlreadyExistException("Event with this name has already existed");
-        } else throw new NotFoundException("User " + createEventRequest.getUserEmail() + " not found!");
+        } else throw new NotFoundException("User not found!");
     }
 
-    public void update(CreateEventRequest eventDAO) throws NotFoundException {
-        User user = userService.findOneByEmail(eventDAO.getUserEmail());
+    public void update(CreateEventRequest eventDAO,HttpServletRequest request) throws NotFoundException {
+//        User user = userService.findOneByEmail(eventDAO.get);
+        User user = (User) request.getAttribute("user");
         if (user != null) {
-            EventDAO savedEvent = repository.findByName(eventDAO.getName());
+
+            EventDAO savedEvent = repository.findById(eventDAO.getId());
             if (user.getEventDAOList().contains(savedEvent)) {
 
                 user.deleteRecordFromEventDAOList(savedEvent);
@@ -116,8 +119,8 @@ public class EventService {
 //                repository.save(savedEvent);
                 userService.save(user);
             } else
-                throw new NotFoundException("User " + eventDAO.getUserEmail() + " does not have event " + savedEvent.getName() + "!");
-        } else throw new NotFoundException("User " + eventDAO.getUserEmail() + " not found!");
+                throw new NotFoundException("User " + user.getEmail() + " does not have event " + savedEvent.getName() + "!");
+        } else throw new NotFoundException("User " + user.getEmail() + " not found!");
     }
 
     public String buildUrl(int id) throws SystemConfigurationException {

@@ -12,6 +12,7 @@ import com.edsson.expopromoter.api.repository.UserRepository;
 import com.edsson.expopromoter.api.request.LoginRequest;
 import com.edsson.expopromoter.api.request.RegisterDeviceRequest;
 import com.edsson.expopromoter.api.request.RegistrationRequest;
+import com.edsson.expopromoter.api.request.UserUpdateRequest;
 import org.apache.catalina.servlet4preview.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -29,11 +30,12 @@ public class UserService {
     private final RoleService roleService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final ImageOperator imageOperator;
+
     @Autowired
     public UserService(UserRepository userRepository, RoleService roleService, BCryptPasswordEncoder bCryptPasswordEncoder, ImageOperator imageOperator) {
         this.repository = userRepository;
         this.roleService = roleService;
-        this.imageOperator=imageOperator;
+        this.imageOperator = imageOperator;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
@@ -81,9 +83,7 @@ public class UserService {
         user.setPassword(bCryptPasswordEncoder.encode(registrationRequest.getPassword()));
         user.setEmail(registrationRequest.getEmail());
         user.setRole(roleDAO);
-        java.util.Date dt = new java.util.Date();
-//        user.setCreatedAt(dt);
-//        user.setUpdatedAt(dt);
+
         if (repository.findOneByEmail(user.getEmail()) == null) {
             repository.save(user);
         } else throw new EntityAlreadyExistException("User " + user.getEmail() + "already exists");
@@ -109,9 +109,20 @@ public class UserService {
         List<JsonTicket> tickets = new ArrayList<>();
 
         for (TicketDAO ticketDAO : u.getTickets()) {
-            tickets.add(new JsonTicket(ticketDAO.getId(),ticketDAO.getEventsByEventId().getName(),imageOperator.encodeFileToBase64Binary(ticketDAO.getImagePath())));
+            tickets.add(new JsonTicket(ticketDAO.getId(), ticketDAO.getEventsByEventId().getName(), imageOperator.encodeFileToBase64Binary(ticketDAO.getImagePath())));
         }
         return tickets;
+    }
+
+    public void update(String email, String password, User user) {
+        if (!user.getEmail().toLowerCase().equals(email.toLowerCase())) {
+            user.setEmail(email);
+        }
+        if (!bCryptPasswordEncoder.matches(password, user.getPassword())) {
+            user.setPassword(bCryptPasswordEncoder.encode(password));
+        }
+
+
     }
 
 }
