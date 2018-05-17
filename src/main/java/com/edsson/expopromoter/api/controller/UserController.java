@@ -159,6 +159,7 @@ public class UserController {
             consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE},
             value = "/create_event")
     public JsonUrl createTicket(@RequestBody CreateEventRequest createEventRequest, HttpResponse response,HttpServletRequest request) throws EntityAlreadyExistException, EventBadCredentialsException, ParseException, FileNotFoundException, SystemConfigurationException, IOException, NotFoundException {
+//        response.setHeader("Token", (String) request.getAttribute("Token"));
         String url = service.createEventDAO(createEventRequest, (User) request.getAttribute("user"));
         response.setStatusCode(200);
 
@@ -168,18 +169,20 @@ public class UserController {
     @RequestMapping(method = RequestMethod.POST,
             consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE},
             value = "/update_event")
-    public ResponseEntity<String> updateEvent(@RequestBody CreateEventRequest createEventRequest,HttpServletRequest request) throws ParseException, EventBadCredentialsException, NotFoundException {
+    public ResponseEntity<String> updateEvent(@RequestBody CreateEventRequest createEventRequest,HttpServletRequest request, HttpResponse response) throws ParseException, EventBadCredentialsException, NotFoundException {
+//        response.setHeader("Token", (String) request.getAttribute("Token"));
         service.update(createEventRequest,request);
         return new ResponseEntity<>("Event updated ", HttpStatus.OK);
     }
 
     @RequestMapping(method = RequestMethod.GET, path = "/show_all_tickets")
     public List<JsonTicket> getAllTicketsPerUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
+//        response.setHeader("Token", (String) request.getAttribute("Token"));
         return userService.getAllTickets(request);
     }
 
 
-    @RequestMapping(method = RequestMethod.GET, value = "/update")
+    @RequestMapping(method = RequestMethod.POST, value = "/update")
     public GenericResponse updateUser(@RequestBody UserUpdateRequest userUpdateRequest,HttpServletRequest request, HttpResponse response) throws IOException {
         userService.update(userUpdateRequest.getNewEmail(),userUpdateRequest.getNewPassword(), (User) request.getAttribute("user"));
         return new GenericResponse("User update success", new String[]{});

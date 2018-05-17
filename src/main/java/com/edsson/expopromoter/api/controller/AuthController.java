@@ -8,6 +8,7 @@ import com.edsson.expopromoter.api.exceptions.FailedToLoginException;
 import com.edsson.expopromoter.api.exceptions.FailedToRegisterException;
 import com.edsson.expopromoter.api.exceptions.RequestValidationException;
 import com.edsson.expopromoter.api.model.User;
+import com.edsson.expopromoter.api.model.json.GenericResponse;
 import com.edsson.expopromoter.api.model.json.JsonUser;
 import com.edsson.expopromoter.api.request.LoginRequest;
 import com.edsson.expopromoter.api.request.RegisterDeviceRequest;
@@ -30,8 +31,11 @@ import org.springframework.web.context.WebApplicationContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.Logger;
+
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @RestController
@@ -40,6 +44,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 @Api(value = "auth", description = "Auth controller")
 public class AuthController {
 
+    final static Logger logger = Logger.getLogger(AuthController.class);
 
     private final UserRegistrationRequestValidator userRegistrationRequestValidator;
     private final UserService userService;
@@ -56,6 +61,7 @@ public class AuthController {
         this.roleService = roleService;
         this.jwtService = jwtService;
         this.loginRequestValidator = loginRequestValidator;
+
     }
 
 
@@ -69,7 +75,7 @@ public class AuthController {
     public JsonUser registration(@RequestBody RegistrationRequest registrationRequest,
                                  BindingResult bindingResult,
                                  HttpServletResponse response) throws FailedToRegisterException, RequestValidationException, EntityAlreadyExistException {
-
+        logger.info("Call controller method: /registration ");
         userRegistrationRequestValidator.validate(registrationRequest, bindingResult);
         if (bindingResult.hasErrors()) {
             throw new RequestValidationException(bindingResult);
@@ -78,6 +84,7 @@ public class AuthController {
 
 
         userService.create(registrationRequest);
+
         return toKenForUser(registrationRequest.getEmail(), response);
     }
 
@@ -153,9 +160,14 @@ public class AuthController {
             String token = jwtService.tokenFor(userContext);
             response.setHeader("Token", token);
             return JsonUser.from(userContext);
-        }
-        else throw new NotFoundException("Device "+ registerDeviceRequest.getDeviceId() + "not exist in Database!");
+        } else throw new NotFoundException("Device " + registerDeviceRequest.getDeviceId() + "not exist in Database!");
     }
 
 
+    @CrossOrigin
+    @RequestMapping(value = "/reset_password", method = GET, produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+    public GenericResponse resetPassword(HttpServletRequest request) {
+        userService.resetPassword((User) request.getAttribute("user"));
+        return new GenericResponse("Ok", new String[]{});
+    }
 }

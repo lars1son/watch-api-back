@@ -23,7 +23,7 @@ public class ImageOperator {
         this.systemConfigurationService = systemConfigurationService;
     }
 
-    public String saveImage(String imageBase64, String path) throws IOException, SystemConfigurationException {
+    public String saveImage(String imageBase64, String path, String fileName) throws IOException, SystemConfigurationException {
 //        String crntImage = imageBase64;
 //         path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\" + id;
         File files = new File(path);
@@ -34,6 +34,10 @@ public class ImageOperator {
                 System.out.println("Failed to create multiple directories!");
             }
         }
+
+
+        path = path + "\\" + fileName + "_" + FileInfoService.findFileExtension(imageBase64);
+
         byte[] data = Base64.decodeBase64(imageBase64);
 
 

@@ -7,7 +7,6 @@ import com.edsson.expopromoter.api.exceptions.SystemConfigurationException;
 import com.edsson.expopromoter.api.model.EventDAO;
 import com.edsson.expopromoter.api.model.TicketDAO;
 import com.edsson.expopromoter.api.model.User;
-import com.edsson.expopromoter.api.operator.FileInfoService;
 import com.edsson.expopromoter.api.operator.ImageOperator;
 import com.edsson.expopromoter.api.repository.TicketRepository;
 import com.edsson.expopromoter.api.request.AddTicketRequest;
@@ -26,10 +25,12 @@ public class TicketService {
     private final EventService eventService;
     private final ImageOperator imageOperator;
     private final UserService userService;
+    private final AmazonClient amazonClient;
 
     @Autowired
-    public TicketService(TicketRepository ticketRepository, ImageOperator imageOperator, SystemConfigurationServiceImpl systemConfigurationService, UserService userService, EventService eventService) {
+    public TicketService(AmazonClient amazonClient, TicketRepository ticketRepository, ImageOperator imageOperator, SystemConfigurationServiceImpl systemConfigurationService, UserService userService, EventService eventService) {
         this.repository = ticketRepository;
+        this.amazonClient = amazonClient;
         this.eventService = eventService;
         this.systemConfigurationService = systemConfigurationService;
         this.imageOperator = imageOperator;
@@ -47,21 +48,21 @@ public class TicketService {
         if (!user.getTickets().contains(ticket)) {
             String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\user_" + user.getId().intValue();
             EventDAO eventDAO = eventService.findOneById(addTicketRequest.getEventId());
-            path = path + "\\" + eventDAO.getName() + "_" + FileInfoService.findFileExtension(addTicketRequest.getImageBase64());
 
-            imageOperator.saveImage(addTicketRequest.getImageBase64(), path );
+            //Local storage
+//            imageOperator.saveImage(addTicketRequest.getImageBase64(), path, eventDAO.getName() );
+
+
+            //Amazon Storage
+            amazonClient.uploadFileTos3bucket(addTicketRequest.getImageBase64(),eventDAO.getName());
 
             ticket.setImagePath(path);
             ticket.setUser(user);
             ticket.setEventsByEventId(eventDAO);
             repository.save(ticket);
-//
-//            eventDAO.addTicket(ticket);
-//            user.addToTicketDAOList(ticket);
-//
-//            userService.save(user);
-            System.out.println("============================= count: "+ eventDAO.getTickets().size());
-//            eventService.save(eventDAO);
+
+            System.out.println("============================= count: " + eventDAO.getTickets().size());
+
             return ticket.getId();
         } else throw new EntityAlreadyExistException("Ticket's already existed for this user");
     }

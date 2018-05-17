@@ -2,12 +2,14 @@ package com.edsson.expopromoter.api.service;
 
 import com.edsson.expopromoter.api.config.RolesConfiguration;
 import com.edsson.expopromoter.api.context.UserContext;
+import com.edsson.expopromoter.api.core.service.JwtUtil;
 import com.edsson.expopromoter.api.exceptions.EntityAlreadyExistException;
 import com.edsson.expopromoter.api.model.RoleDAO;
 import com.edsson.expopromoter.api.model.TicketDAO;
 import com.edsson.expopromoter.api.model.User;
 import com.edsson.expopromoter.api.model.json.JsonTicket;
 import com.edsson.expopromoter.api.operator.ImageOperator;
+import com.edsson.expopromoter.api.operator.MailSender;
 import com.edsson.expopromoter.api.repository.UserRepository;
 import com.edsson.expopromoter.api.request.LoginRequest;
 import com.edsson.expopromoter.api.request.RegisterDeviceRequest;
@@ -19,6 +21,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,13 +33,16 @@ public class UserService {
     private final RoleService roleService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final ImageOperator imageOperator;
+    private final MailSender mailSender;
 
     @Autowired
-    public UserService(UserRepository userRepository, RoleService roleService, BCryptPasswordEncoder bCryptPasswordEncoder, ImageOperator imageOperator) {
+    public UserService(MailSender mailSender, UserRepository userRepository, RoleService roleService, BCryptPasswordEncoder bCryptPasswordEncoder, ImageOperator imageOperator) {
         this.repository = userRepository;
+
         this.roleService = roleService;
         this.imageOperator = imageOperator;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.mailSender=mailSender;
     }
 
     /**
@@ -124,6 +130,16 @@ public class UserService {
 
 
     }
+//
+//    public String newTokenIfOldIsExpired(String token) throws IOException, URISyntaxException {
+//        return jwtUtil.updateToken(token);
+//    }
 
+    public  void resetPassword(User user){
+        user.setPassword(bCryptPasswordEncoder.encode("Aq1Sw2De3"));
+        repository.save(user);
+        mailSender.sendMail(user.getEmail(),"New password: Aq1Sw2De3");
+
+    }
 }
 

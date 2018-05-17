@@ -51,7 +51,7 @@ public class JwtUtil {
             Date expiration = Date.from(LocalDateTime.now(UTC).plusHours(2).toInstant(UTC));
             String token = Jwts.builder()
                     .setSubject(user.getEmail())
-//                    .setExpiration(expiration)
+                    .setExpiration(expiration)
                     .setIssuer(ISSUER)
                     .claim("user", new Credential(user))
                     .signWith(SignatureAlgorithm.HS512, secretKey)

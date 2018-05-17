@@ -32,6 +32,7 @@ public class JwtFilter extends GenericFilterBean {
         this.jwtUtil = jwtUtil;
         this.userService = userService;
     }
+
     @Transactional
     @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain filterChain) throws IOException, ServletException {
@@ -51,14 +52,18 @@ public class JwtFilter extends GenericFilterBean {
 
         String authHeader = httpRequest.getHeader("Authorization");
 //Todo:here must be token checking
+
         if (authHeader != null && !authHeader.equals("")) {
             try {
+                authHeader = jwtUtil.updateToken(authHeader);
+                httpResponse.setHeader("Token", authHeader);
+
                 Claims c = jwtUtil.parseToken(authHeader);
                 httpRequest.setAttribute("claims", c);
                 LinkedHashMap user = c.get("user", LinkedHashMap.class);
                 httpRequest.setAttribute("user_roles", user.get("roles"));
 
-                User u = userService.findOneById(Long.valueOf((Integer)user.get("id")));
+                User u = userService.findOneById(Long.valueOf((Integer) user.get("id")));
                 httpRequest.setAttribute("user", u);
 //                httpResponse.setHeader("Token", );
                 filterChain.doFilter(httpRequest, res);

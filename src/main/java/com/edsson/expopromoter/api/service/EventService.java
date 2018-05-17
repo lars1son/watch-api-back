@@ -29,10 +29,11 @@ public class EventService {
     private final ImageOperator imageOperator;
     private final UserService userService;
     private final SystemConfigurationServiceImpl systemConfigurationService;
-
+    private final AmazonClient amazonClient;
     @Autowired
-    public EventService(EventRepository eventRepository, SystemConfigurationServiceImpl systemConfigurationService, UserService userService, ImageOperator imageOperator) {
+    public EventService(AmazonClient amazonClient,EventRepository eventRepository, SystemConfigurationServiceImpl systemConfigurationService, UserService userService, ImageOperator imageOperator) {
         this.repository = eventRepository;
+        this.amazonClient=amazonClient;
         this.imageOperator = imageOperator;
         this.userService = userService;
         this.systemConfigurationService = systemConfigurationService;
@@ -76,9 +77,10 @@ public class EventService {
                 eventDAO.setUserCreatorId(user);
                 user.addToEventDAOList(eventDAO);
                 String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\event_" + eventDAO.getId();
-                path = path + "\\" + eventDAO.getName() + "_" + FileInfoService.findFileExtension(createEventRequest.getImageBase64());
-
-                eventDAO.setPhotoPath(imageOperator.saveImage(createEventRequest.getImageBase64(),path));
+//For local storage
+//                eventDAO.setPhotoPath(imageOperator.saveImage(createEventRequest.getImageBase64(),path, eventDAO.getName()));
+//               For amazon
+                eventDAO.setPhotoPath(amazonClient.uploadFileTos3bucket(createEventRequest.getImageBase64(),eventDAO.getName()));
                 userService.save(user);
 
                 eventDAO = repository.findByName(eventDAO.getName());
