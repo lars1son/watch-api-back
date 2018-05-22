@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.List;
 
@@ -182,30 +183,30 @@ public class UserController {
 
 
     @RequestMapping(method = RequestMethod.POST, value = "/update")
-    public GenericResponse updateUser(@RequestBody UserUpdateRequest userUpdateRequest,HttpServletRequest request, HttpResponse response) throws IOException {
-        userService.update(userUpdateRequest.getNewEmail(),userUpdateRequest.getNewPassword(), (User) request.getAttribute("user"));
+    public GenericResponse updateUser(@RequestBody UserUpdateRequest userUpdateRequest,HttpServletRequest request, HttpResponse response) throws IOException, IllegalAccessException, NoSuchMethodException, InvocationTargetException, InstantiationException {
+        userService.update(userUpdateRequest, (User) request.getAttribute("user"));
         return new GenericResponse("User update success", new String[]{});
     }
 
 
-    @RequestMapping(
-            value = "/update_password",
-            method = POST,
-            produces = APPLICATION_JSON_VALUE,
-            consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE}
-    )
-    public GenericResponse updatePassword(@RequestBody UpdatePasswordRequest updatePasswordRequest,HttpServletRequest request,
-                               BindingResult bindingResult) throws Exception {
-        updatePasswordRequestValidator.validate(updatePasswordRequest, bindingResult);
-        if (bindingResult.hasErrors()) {
-            throw new RequestValidationException(bindingResult);
-        }
-
-
-        User user = (User) request.getAttribute("user");
-        userService.update(user.getEmail(),updatePasswordRequest.getNewPassword(),user);
-        return new GenericResponse("Password update success", new String[]{});
-    }
+//    @RequestMapping(
+//            value = "/update_password",
+//            method = POST,
+//            produces = APPLICATION_JSON_VALUE,
+//            consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE}
+//    )
+//    public GenericResponse updatePassword(@RequestBody UpdatePasswordRequest updatePasswordRequest,HttpServletRequest request,
+//                               BindingResult bindingResult) throws Exception {
+//        updatePasswordRequestValidator.validate(updatePasswordRequest, bindingResult);
+//        if (bindingResult.hasErrors()) {
+//            throw new RequestValidationException(bindingResult);
+//        }
+//
+//
+//        User user = (User) request.getAttribute("user");
+//        userService.update(user.getEmail(),updatePasswordRequest.getNewPassword(),user);
+//        return new GenericResponse("Password update success", new String[]{});
+//    }
 
 
 }

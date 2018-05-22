@@ -33,7 +33,7 @@ public class UserContext {
         userContext.updatedAt=userDAO.getUpdatedAt();
         userContext.phoneNumber=userDAO.getPhoneNumber();
         userContext.contactEmail=userDAO.getContactEmail();
-        userContext.fullName=userDAO.getFullname();
+        userContext.fullName=userDAO.getFullName();
         return userContext;
     }
 

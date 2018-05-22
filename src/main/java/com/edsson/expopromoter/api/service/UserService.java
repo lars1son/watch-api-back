@@ -2,7 +2,6 @@ package com.edsson.expopromoter.api.service;
 
 import com.edsson.expopromoter.api.config.RolesConfiguration;
 import com.edsson.expopromoter.api.context.UserContext;
-import com.edsson.expopromoter.api.core.service.JwtUtil;
 import com.edsson.expopromoter.api.exceptions.EntityAlreadyExistException;
 import com.edsson.expopromoter.api.model.RoleDAO;
 import com.edsson.expopromoter.api.model.TicketDAO;
@@ -15,13 +14,14 @@ import com.edsson.expopromoter.api.request.LoginRequest;
 import com.edsson.expopromoter.api.request.RegisterDeviceRequest;
 import com.edsson.expopromoter.api.request.RegistrationRequest;
 import com.edsson.expopromoter.api.request.UserUpdateRequest;
-import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,7 +42,7 @@ public class UserService {
         this.roleService = roleService;
         this.imageOperator = imageOperator;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-        this.mailSender=mailSender;
+        this.mailSender = mailSender;
     }
 
     /**
@@ -120,25 +120,61 @@ public class UserService {
         return tickets;
     }
 
-    public void update(String email, String password, User user) {
-        if (!user.getEmail().toLowerCase().equals(email.toLowerCase())) {
-            user.setEmail(email);
-        }
-        if (!bCryptPasswordEncoder.matches(password, user.getPassword())) {
-            user.setPassword(bCryptPasswordEncoder.encode(password));
-        }
+    public void update(UserUpdateRequest request, User user) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, InstantiationException {
+
+        for (Method m : UserUpdateRequest.class.getDeclaredMethods()) {
 
 
+            if (m.getName().startsWith("get") && m.getParameterCount() == 0 && !m.getName().startsWith("getNew")) {
+                m.setAccessible(true);
+
+                Method getUserMethod = User.class.getDeclaredMethod(m.getName());
+                getUserMethod.setAccessible(true);
+                if ((String) m.invoke(request) != null) {
+                    if ((String) getUserMethod.invoke(user) != null) {
+                        if (((String) getUserMethod.invoke(user)).toLowerCase().equals((m.invoke(request)))) {
+                            continue;
+                        }
+                    }
+                    Method setMethod = User.class.getDeclaredMethod(m.getName().replace("get", "set"), String.class);
+                    setMethod.invoke(user, m.invoke(request));
+
+                }
+            }
+        }
+
+//        if (request.getContactEmail() != null) {
+//            if (user.getContactEmail() != null) {
+//                if (!user.getContactEmail().toLowerCase().equals(request.getContactEmail())) {
+//                    user.setContactEmail(request.getContactEmail());
+//                }
+//            }
+//            else  user.setContactEmail(request.getContactEmail());
+//        }
+//
+//        if (request.getFullName() != null && !user.getFullName().toLowerCase().equals(request.getFullName())) {
+//            user.setFullName(request.getFullName());
+//        }
+//        if (request.getPhoneNumber() != null && !user.getPhoneNumber().toLowerCase().equals(request.getPhoneNumber())) {
+//            user.setPhoneNumber(request.getPhoneNumber());
+//        }
+//        if (request.getEmail() != null && !user.getEmail().toLowerCase().equals(request.getEmail().toLowerCase())) {
+//            user.setEmail(request.getEmail());
+//        }
+//        if (request.getNewPassword() != null && !bCryptPasswordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+//            user.setPassword(bCryptPasswordEncoder.encode(request.getNewPassword()));
+//        }
+        repository.save(user);
     }
 //
 //    public String newTokenIfOldIsExpired(String token) throws IOException, URISyntaxException {
 //        return jwtUtil.updateToken(token);
 //    }
 
-    public  void resetPassword(User user){
+    public void resetPassword(User user) {
         user.setPassword(bCryptPasswordEncoder.encode("Aq1Sw2De3"));
         repository.save(user);
-        mailSender.sendMail(user.getEmail(),"New password: Aq1Sw2De3");
+        mailSender.sendMail(user.getEmail(), "New password: Aq1Sw2De3");
 
     }
 }
