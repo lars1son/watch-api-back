@@ -14,7 +14,7 @@ public class SystemConfigurationKeys {
 
 
     public static final class DefaultUserTicketImagePath{
-        public final static String PATH = "default_user_ticket_image_path";
+        public final static String PATH = "default_ticket_loaded_image_path";
     }
     public static final String[] SYSTEM_CONFIGURATION_KEYS = {
             DefaultImagePath.PATH

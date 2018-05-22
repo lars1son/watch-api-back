@@ -53,7 +53,7 @@ public class EventDAO extends BaseModel {
     private List<TicketDAO> tickets;
 
     //    @Column(name = "userCreatorId", nullable = true)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_creator_id", referencedColumnName = "id", nullable = false)
     private User userCreatorId;
 
@@ -187,8 +187,10 @@ public class EventDAO extends BaseModel {
 //        if (o == null || getClass() != o.getClass()) return false;
 
         EventDAO that = (EventDAO) o;
-        if (this.getName() != that.getName()) return false;
-        if (this.userCreatorId != that.userCreatorId) return false;
+        if (!this.getName().equals(that.getName()))
+            return false;
+        if (this.userCreatorId.getId() != that.userCreatorId.getId())
+            return false;
 //        if (id != that.id) return false;
 //        if (name != null ? !name.equals(that.name) : that.name != null) return false;
 //
@@ -222,4 +224,6 @@ public class EventDAO extends BaseModel {
 
         return result;
     }
+
+
 }

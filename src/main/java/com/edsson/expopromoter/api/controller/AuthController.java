@@ -1,6 +1,4 @@
 package com.edsson.expopromoter.api.controller;
-
-
 import com.edsson.expopromoter.api.context.UserContext;
 import com.edsson.expopromoter.api.core.service.JwtUtil;
 import com.edsson.expopromoter.api.exceptions.EntityAlreadyExistException;
@@ -31,8 +29,6 @@ import org.springframework.web.context.WebApplicationContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
-
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
@@ -44,7 +40,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 @Api(value = "auth", description = "Auth controller")
 public class AuthController {
 
-    final static Logger logger = Logger.getLogger(AuthController.class);
+//    final static Logger logger = Logger.getLogger(AuthController.class);
 
     private final UserRegistrationRequestValidator userRegistrationRequestValidator;
     private final UserService userService;
@@ -75,7 +71,7 @@ public class AuthController {
     public JsonUser registration(@RequestBody RegistrationRequest registrationRequest,
                                  BindingResult bindingResult,
                                  HttpServletResponse response) throws FailedToRegisterException, RequestValidationException, EntityAlreadyExistException {
-        logger.info("Call controller method: /registration ");
+//        logger.info("Call controller method: /registration ");
         userRegistrationRequestValidator.validate(registrationRequest, bindingResult);
         if (bindingResult.hasErrors()) {
             throw new RequestValidationException(bindingResult);

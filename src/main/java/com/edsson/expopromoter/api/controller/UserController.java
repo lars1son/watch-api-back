@@ -18,14 +18,15 @@ import com.edsson.expopromoter.api.service.EventService;
 import com.edsson.expopromoter.api.service.UserService;
 import com.edsson.expopromoter.api.validator.UpdatePasswordRequestValidator;
 import javassist.NotFoundException;
-import org.apache.catalina.servlet4preview.http.HttpServletRequest;
+
+
+import javax.servlet.http.HttpServletRequest;
 import org.apache.http.HttpResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-
 import javax.servlet.http.HttpServletResponse;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -160,10 +161,8 @@ public class UserController {
             value = "/create_event")
     public JsonUrl createTicket(@RequestBody CreateEventRequest createEventRequest, HttpResponse response,HttpServletRequest request) throws EntityAlreadyExistException, EventBadCredentialsException, ParseException, FileNotFoundException, SystemConfigurationException, IOException, NotFoundException {
 //        response.setHeader("Token", (String) request.getAttribute("Token"));
-        String url = service.createEventDAO(createEventRequest, (User) request.getAttribute("user"));
-        response.setStatusCode(200);
+        return service.createEventDAO(createEventRequest, (User) request.getAttribute("user"));
 
-        return new JsonUrl(url);
     }
 
     @RequestMapping(method = RequestMethod.POST,

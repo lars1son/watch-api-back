@@ -8,19 +8,22 @@ import com.edsson.expopromoter.api.exceptions.SystemConfigurationException;
 import com.edsson.expopromoter.api.model.EventDAO;
 import com.edsson.expopromoter.api.model.User;
 import com.edsson.expopromoter.api.model.json.JsonEventInfo;
-import com.edsson.expopromoter.api.operator.FileInfoService;
+import com.edsson.expopromoter.api.model.json.JsonUrl;
 import com.edsson.expopromoter.api.operator.ImageOperator;
 import com.edsson.expopromoter.api.repository.EventRepository;
 import com.edsson.expopromoter.api.request.CreateEventRequest;
+import com.edsson.expopromoter.api.request.GetUpdatedEventsRequest;
 import com.edsson.expopromoter.api.service.system_configuration.SystemConfigurationServiceImpl;
 import javassist.NotFoundException;
-import org.apache.catalina.servlet4preview.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class EventService {
@@ -30,10 +33,11 @@ public class EventService {
     private final UserService userService;
     private final SystemConfigurationServiceImpl systemConfigurationService;
     private final AmazonClient amazonClient;
+
     @Autowired
-    public EventService(AmazonClient amazonClient,EventRepository eventRepository, SystemConfigurationServiceImpl systemConfigurationService, UserService userService, ImageOperator imageOperator) {
+    public EventService(AmazonClient amazonClient, EventRepository eventRepository, SystemConfigurationServiceImpl systemConfigurationService, UserService userService, ImageOperator imageOperator) {
         this.repository = eventRepository;
-        this.amazonClient=amazonClient;
+        this.amazonClient = amazonClient;
         this.imageOperator = imageOperator;
         this.userService = userService;
         this.systemConfigurationService = systemConfigurationService;
@@ -51,13 +55,13 @@ public class EventService {
 //        return repository.findByName(name);
 //    }
 
-    public String createEventDAO(CreateEventRequest createEventRequest, User user) throws IOException, SystemConfigurationException, ParseException, EntityAlreadyExistException, EventBadCredentialsException, NotFoundException {
+    public JsonUrl createEventDAO(CreateEventRequest createEventRequest, User user) throws IOException, SystemConfigurationException, ParseException, EntityAlreadyExistException, EventBadCredentialsException, NotFoundException {
 
         if (user != null) {
             if (repository.findByName(createEventRequest.getName()) == null) {
 
                 EventDAO eventDAO = new EventDAO();
-                SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss.SSS");
+                SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
                 if (createEventRequest.getName() != null && createEventRequest.getDateStart() != null && createEventRequest.getDateEnd() != null) {
                     eventDAO.setName(createEventRequest.getName());
@@ -75,21 +79,25 @@ public class EventService {
                 eventDAO.setEventWebsite(createEventRequest.getWebsite());
                 eventDAO.setTicketUrl(createEventRequest.getTicketUrl());
                 eventDAO.setUserCreatorId(user);
-                user.addToEventDAOList(eventDAO);
+
                 String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\event_" + eventDAO.getId();
 //For local storage
 //                eventDAO.setPhotoPath(imageOperator.saveImage(createEventRequest.getImageBase64(),path, eventDAO.getName()));
 //               For amazon
-                eventDAO.setPhotoPath(amazonClient.uploadFileTos3bucket(createEventRequest.getImageBase64(),eventDAO.getName()));
+                if (createEventRequest.getImageBase64() != null) {
+                    eventDAO.setPhotoPath(amazonClient.uploadFileTos3bucket(createEventRequest.getImageBase64(), eventDAO.getName()));
+                }
+
+                user.addToEventDAOList(eventDAO);
                 userService.save(user);
 
                 eventDAO = repository.findByName(eventDAO.getName());
-                return buildUrl(eventDAO.getId());
+                return new JsonUrl(buildUrl(eventDAO.getId()),eventDAO.getId());
             } else throw new EntityAlreadyExistException("Event with this name has already existed");
         } else throw new NotFoundException("User not found!");
     }
 
-    public void update(CreateEventRequest eventDAO,HttpServletRequest request) throws NotFoundException {
+    public void update(CreateEventRequest eventDAO, HttpServletRequest request) throws NotFoundException {
 //        User user = userService.findOneByEmail(eventDAO.get);
         User user = (User) request.getAttribute("user");
         if (user != null) {
@@ -121,18 +129,37 @@ public class EventService {
 //                repository.save(savedEvent);
                 userService.save(user);
             } else
-                throw new NotFoundException("User " + user.getEmail() + " does not have event " + savedEvent.getName() + "!");
+                throw new NotFoundException("User " + user.getEmail() + " does not have event: '" + savedEvent.getName() + "'!");
         } else throw new NotFoundException("User " + user.getEmail() + " not found!");
     }
 
     public String buildUrl(int id) throws SystemConfigurationException {
         return systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultEventURL.URL) + id;
     }
+
     public JsonEventInfo buildWithImage(EventDAO eventDAO) throws IOException {
         String photo = eventDAO.getPhotoPath();
-        photo=imageOperator.encodeFileToBase64Binary(photo);
+        photo = imageOperator.encodeFileToBase64Binary(photo);
         JsonEventInfo json = JsonEventInfo.from(eventDAO);
         json.setPhoto(photo);
         return json;
+    }
+
+    public List<JsonEventInfo> getUpdatedEvent(GetUpdatedEventsRequest getUpdatedEventsRequest, Long id) throws ParseException {
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+        List<JsonEventInfo> result = new ArrayList<>();
+//
+//        List<EventDAO> eventDAOS = repository.findByIdAndUpdatedAtAfter(id, formatter.parse(getUpdatedEventsRequest.getLastUpdate()));
+//        for (EventDAO eventDAO : eventDAOS) {
+//            result.add(JsonEventInfo.from(eventDAO));
+//        }
+//        return result;
+        User user = userService.findOneById(id);
+        for (EventDAO eventDAO : user.getEventDAOList()) {
+            if (eventDAO.getUpdatedAt().after(formatter.parse(getUpdatedEventsRequest.getLastUpdate()))) {
+                result.add(JsonEventInfo.from(eventDAO));
+            }
+        }
+        return result;
     }
 }

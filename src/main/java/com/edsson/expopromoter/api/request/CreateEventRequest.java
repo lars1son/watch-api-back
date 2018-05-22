@@ -14,6 +14,8 @@ public class CreateEventRequest {
     private String dateEnd;
     private String location;
     private String website;
+    private int eventId;
+
     private String description;
     private String agenda;
     private String contacts;
@@ -73,8 +75,16 @@ public class CreateEventRequest {
 
     public void setWebsite(String website) {
         this.website = website;
+
+
+    }
+    public int getEventId() {
+        return eventId;
     }
 
+    public void setEventId(int eventId) {
+        this.eventId = eventId;
+    }
     public String getDescription() {
         return description;
     }

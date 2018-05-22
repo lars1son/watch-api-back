@@ -11,8 +11,7 @@ import com.edsson.expopromoter.api.operator.ImageOperator;
 import com.edsson.expopromoter.api.repository.TicketRepository;
 import com.edsson.expopromoter.api.request.AddTicketRequest;
 import com.edsson.expopromoter.api.service.system_configuration.SystemConfigurationServiceImpl;
-import org.apache.catalina.servlet4preview.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.servlet.http.HttpServletRequest;import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
