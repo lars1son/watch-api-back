@@ -14,7 +14,7 @@ public class CreateEventRequest {
     private String dateEnd;
     private String location;
     private String website;
-    private int eventId;
+//    private int eventId;
 
     private String description;
     private String agenda;
@@ -78,13 +78,13 @@ public class CreateEventRequest {
 
 
     }
-    public int getEventId() {
-        return eventId;
-    }
-
-    public void setEventId(int eventId) {
-        this.eventId = eventId;
-    }
+//    public int getEventId() {
+//        return eventId;
+//    }
+//
+//    public void setEventId(int eventId) {
+//        this.eventId = eventId;
+//    }
     public String getDescription() {
         return description;
     }

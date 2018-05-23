@@ -169,10 +169,10 @@ public class UserController {
     @RequestMapping(method = RequestMethod.POST,
             consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE},
             value = "/update_event")
-    public ResponseEntity<String> updateEvent(@RequestBody CreateEventRequest createEventRequest,HttpServletRequest request, HttpResponse response) throws ParseException, EventBadCredentialsException, NotFoundException {
+    public JsonUrl updateEvent(@RequestBody CreateEventRequest createEventRequest,HttpServletRequest request, HttpResponse response) throws ParseException, EventBadCredentialsException, NotFoundException, IOException, SystemConfigurationException {
 //        response.setHeader("Token", (String) request.getAttribute("Token"));
-        service.update(createEventRequest,request);
-        return new ResponseEntity<>("Event updated ", HttpStatus.OK);
+        return service.update(createEventRequest,request);
+
     }
 
     @RequestMapping(method = RequestMethod.GET, path = "/show_all_tickets")

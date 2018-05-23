@@ -19,6 +19,8 @@ import com.edsson.expopromoter.api.validator.UserRegistrationRequestValidator;
 import io.jsonwebtoken.JwtException;
 import io.swagger.annotations.Api;
 import javassist.NotFoundException;
+
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
@@ -41,6 +43,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 public class AuthController {
 
 //    final static Logger logger = Logger.getLogger(AuthController.class);
+    private static final Logger LOG = Logger.getLogger(AuthController.class);
 
     private final UserRegistrationRequestValidator userRegistrationRequestValidator;
     private final UserService userService;
@@ -61,6 +64,9 @@ public class AuthController {
     }
 
 
+    public static void doSmth(){
+        LOG.info("AuthController is created!!!");
+    }
     @CrossOrigin
     @RequestMapping(
             value = "/registration",

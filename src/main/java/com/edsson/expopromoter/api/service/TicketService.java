@@ -49,11 +49,11 @@ public class TicketService {
             EventDAO eventDAO = eventService.findOneById(addTicketRequest.getEventId());
 
             //Local storage
-//            imageOperator.saveImage(addTicketRequest.getImageBase64(), path, eventDAO.getName() );
+            imageOperator.saveImage(addTicketRequest.getImageBase64(), path, eventDAO.getName() );
 
 
             //Amazon Storage
-            amazonClient.uploadFileTos3bucket(addTicketRequest.getImageBase64(),eventDAO.getName());
+//            amazonClient.uploadFileTos3bucket(addTicketRequest.getImageBase64(),eventDAO.getName());
 
             ticket.setImagePath(path);
             ticket.setUser(user);

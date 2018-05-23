@@ -1,7 +1,7 @@
 package com.edsson.expopromoter.api.operator;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -18,7 +18,7 @@ public class MailSender {
 
     private static String subject = "Password reset";
 
-    Logger logger = LoggerFactory.getLogger(this.getClass());
+    Logger logger = Logger.getLogger(this.getClass());
 
     public void sendMail(String to, String body) {
 

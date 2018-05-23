@@ -17,7 +17,7 @@ public class FileInfoService {
         Tika tika = new Tika();
         String fileType = tika.detect(base64Bytes);
         String fileExtension = changeFileType(fileType);
-        return ("eventImage" +  "." +fileExtension);
+        return ("." +fileExtension);
     }
 
     public static String changeFileType(String fileType) {
@@ -30,12 +30,12 @@ public class FileInfoService {
             fileType = "pdf";
             cahnged = true;
         }
-        if (fileType.toLowerCase().contains("msword")) {
-            fileType = "doc";
+        if (fileType.toLowerCase().contains("PNG")) {
+            fileType = "png";
             cahnged = true;
         }
-        if (fileType.toLowerCase().contains("wordprocessingml")) {
-            fileType = "docx";
+        if (fileType.toLowerCase().contains("JPG")) {
+            fileType = "jpg";
             cahnged = true;
         }
 
