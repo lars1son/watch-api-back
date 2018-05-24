@@ -36,7 +36,9 @@ public class ImageOperator {
         }
 
 
-        path = path + "\\" + fileName + "_" + FileInfoService.findFileExtension(imageBase64);
+//        path = path + "\\" + fileName + "_" + FileInfoService.findFileExtension(imageBase64);
+
+        path = path + "/" + fileName.replace(" ","") + "_" + FileInfoService.findFileExtension(imageBase64);
 
         byte[] data = Base64.decodeBase64(imageBase64);
 

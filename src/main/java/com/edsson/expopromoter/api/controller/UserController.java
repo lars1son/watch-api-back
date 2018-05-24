@@ -22,6 +22,7 @@ import javassist.NotFoundException;
 
 import javax.servlet.http.HttpServletRequest;
 import org.apache.http.HttpResponse;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +35,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.List;
 
+
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
@@ -43,6 +45,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 @RequestMapping(value = "/users")
 public class UserController {
 
+    private static final Logger log = Logger.getLogger(UserController.class);
     private final EventService service;
     private final ImageOperator imageOperator;
     private final UserService userService;
@@ -162,6 +165,7 @@ public class UserController {
             value = "/create_event")
     public JsonUrl createTicket(@RequestBody CreateEventRequest createEventRequest, HttpResponse response,HttpServletRequest request) throws EntityAlreadyExistException, EventBadCredentialsException, ParseException, FileNotFoundException, SystemConfigurationException, IOException, NotFoundException {
 //        response.setHeader("Token", (String) request.getAttribute("Token"));
+        log.info("/Create_event request");
         return service.createEventDAO(createEventRequest, (User) request.getAttribute("user"));
 
     }

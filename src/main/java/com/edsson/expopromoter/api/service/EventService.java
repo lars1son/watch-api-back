@@ -73,8 +73,6 @@ public class EventService {
 
                 } else throw new EventBadCredentialsException("Bad Credentials");
 
-//            createEventRequest.getImageBase64();
-
                 eventDAO.setAgenda(createEventRequest.getAgenda());
                 eventDAO.setContacts(createEventRequest.getContacts());
                 eventDAO.setDescription(createEventRequest.getDescription());
@@ -82,10 +80,6 @@ public class EventService {
                 eventDAO.setEventWebsite(createEventRequest.getWebsite());
                 eventDAO.setTicketUrl(createEventRequest.getTicketUrl());
                 eventDAO.setUserCreatorId(user);
-
-                String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\event_" + eventDAO.getId();
-//For local storage
-                eventDAO.setPhotoPath(imageOperator.saveImage(createEventRequest.getImageBase64(),path, eventDAO.getName()));
 
 
 //               For amazon
@@ -97,18 +91,31 @@ public class EventService {
                 user.addToEventDAOList(eventDAO);
                 userService.save(user);
 
+
+                logger.info(createEventRequest.getImageBase64());
+
+
                 logger.info("New event saved! ");
                 eventDAO = repository.findByName(eventDAO.getName());
 
+                //For local storage
+//                String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\event_" + eventDAO.getId();
+//              AMAZON
 
-//                return new JsonUrl(buildUrl(eventDAO.getId()),eventDAO.getId());
-                return new JsonUrl(eventDAO.getPhotoPath(),eventDAO.getId());
+
+                String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "/event_" + eventDAO.getId();
+                eventDAO.setPhotoPath(imageOperator.saveImage(createEventRequest.getImageBase64(), path, eventDAO.getName()));
+
+
+                repository.save(eventDAO);
+
+                return new JsonUrl(eventDAO.getPhotoPath(), eventDAO.getId());
             } else {
                 logger.error(new EntityAlreadyExistException("Event with this name has already existed"));
                 throw new EntityAlreadyExistException("Event with this name has already existed");
             }
 
-        } else{
+        } else {
             logger.error(new NotFoundException("User not found!"));
             throw new NotFoundException("User not found!");
         }
@@ -142,24 +149,28 @@ public class EventService {
                 if (eventDAO.getContacts() != null) {
                     savedEvent.setContacts(eventDAO.getContacts());
                 }
-                if (eventDAO.getImageBase64()!=null){
-                    String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\event_" + eventDAO.getId();
-                    savedEvent.setPhotoPath(imageOperator.saveImage(eventDAO.getImageBase64(),path,String.valueOf(eventDAO.getId())));
+                if (eventDAO.getImageBase64() != null) {
+//                    Windows
+//                    String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\event_" + eventDAO.getId();
+//                    Linux
+                    String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "/event_" + eventDAO.getId();
+
+                    savedEvent.setPhotoPath(imageOperator.saveImage(eventDAO.getImageBase64(), path, String.valueOf(eventDAO.getId())));
                 }
-                if( eventDAO.getDateEnd()!=null){
+                if (eventDAO.getDateEnd() != null) {
                     savedEvent.setDateEnd(formatter.parse(eventDAO.getDateEnd()));
                 }
-                if (eventDAO.getDateStart()!=null){
+                if (eventDAO.getDateStart() != null) {
                     savedEvent.setDateStart(formatter.parse(eventDAO.getDateStart()));
                 }
-                if (eventDAO.getName()!=null){
+                if (eventDAO.getName() != null) {
                     savedEvent.setName(eventDAO.getName());
                 }
 
                 user.addToEventDAOList(savedEvent);
 //                repository.save(savedEvent);
                 userService.save(user);
-                return new JsonUrl(savedEvent.getPhotoPath(),savedEvent.getId());
+                return new JsonUrl(savedEvent.getPhotoPath(), savedEvent.getId());
             } else
                 throw new NotFoundException("User " + user.getEmail() + " does not have event: '" + savedEvent.getName() + "'!");
         } else throw new NotFoundException("User " + user.getEmail() + " not found!");

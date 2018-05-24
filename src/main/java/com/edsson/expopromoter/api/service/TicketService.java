@@ -45,7 +45,9 @@ public class TicketService {
         TicketDAO ticket = new TicketDAO();
         User user = (User) request.getAttribute("user");
         if (!user.getTickets().contains(ticket)) {
-            String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\user_" + user.getId().intValue();
+//            String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\user_" + user.getId().intValue();
+            String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "/user_" + user.getId().intValue();
+
             EventDAO eventDAO = eventService.findOneById(addTicketRequest.getEventId());
 
             //Local storage

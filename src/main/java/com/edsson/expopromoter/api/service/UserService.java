@@ -85,6 +85,7 @@ public class UserService {
 
     public void create(RegistrationRequest registrationRequest) throws EntityAlreadyExistException {
         RoleDAO roleDAO = roleService.findRoleDAOByRole(RolesConfiguration.ROLE_USER);
+
         User user = new User();
         user.setPassword(bCryptPasswordEncoder.encode(registrationRequest.getPassword()));
         user.setEmail(registrationRequest.getEmail());
