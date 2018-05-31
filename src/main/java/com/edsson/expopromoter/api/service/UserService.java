@@ -1,19 +1,27 @@
 package com.edsson.expopromoter.api.service;
 
 import com.edsson.expopromoter.api.config.RolesConfiguration;
+import com.edsson.expopromoter.api.config.SystemConfigurationKeys;
 import com.edsson.expopromoter.api.context.UserContext;
 import com.edsson.expopromoter.api.exceptions.EntityAlreadyExistException;
+import com.edsson.expopromoter.api.exceptions.FailedToCreateResetPasswordTokenException;
+import com.edsson.expopromoter.api.exceptions.FailedToUpdateUserException;
+import com.edsson.expopromoter.api.exceptions.SystemConfigurationException;
+import com.edsson.expopromoter.api.model.PasswordResetTokenDAO;
 import com.edsson.expopromoter.api.model.RoleDAO;
 import com.edsson.expopromoter.api.model.TicketDAO;
 import com.edsson.expopromoter.api.model.User;
 import com.edsson.expopromoter.api.model.json.JsonTicket;
 import com.edsson.expopromoter.api.operator.ImageOperator;
 import com.edsson.expopromoter.api.operator.MailSender;
+import com.edsson.expopromoter.api.repository.PasswordTokenRepository;
 import com.edsson.expopromoter.api.repository.UserRepository;
 import com.edsson.expopromoter.api.request.LoginRequest;
 import com.edsson.expopromoter.api.request.RegisterDeviceRequest;
 import com.edsson.expopromoter.api.request.RegistrationRequest;
 import com.edsson.expopromoter.api.request.UserUpdateRequest;
+import com.edsson.expopromoter.api.service.system_configuration.SystemConfigurationService;
+import com.edsson.expopromoter.api.service.system_configuration.SystemConfigurationServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,7 +31,9 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -34,15 +44,18 @@ public class UserService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final ImageOperator imageOperator;
     private final MailSender mailSender;
+    private final SystemConfigurationService systemConfigurationService;
+    private final PasswordTokenRepository passwordTokenRepository;
 
     @Autowired
-    public UserService(MailSender mailSender, UserRepository userRepository, RoleService roleService, BCryptPasswordEncoder bCryptPasswordEncoder, ImageOperator imageOperator) {
+    public UserService(PasswordTokenRepository passwordTokenRepository, SystemConfigurationServiceImpl systemConfigurationService, MailSender mailSender, UserRepository userRepository, RoleService roleService, BCryptPasswordEncoder bCryptPasswordEncoder, ImageOperator imageOperator) {
         this.repository = userRepository;
-
+        this.systemConfigurationService = systemConfigurationService;
         this.roleService = roleService;
         this.imageOperator = imageOperator;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.mailSender = mailSender;
+        this.passwordTokenRepository = passwordTokenRepository;
     }
 
     /**
@@ -138,33 +151,16 @@ public class UserService {
                         }
                     }
                     Method setMethod = User.class.getDeclaredMethod(m.getName().replace("get", "set"), String.class);
+                    if (setMethod.getName().toLowerCase().contains("password")) {
+                        setMethod.invoke(user, bCryptPasswordEncoder.encode((String) m.invoke(request)));
+                    }
                     setMethod.invoke(user, m.invoke(request));
 
                 }
             }
         }
 
-//        if (request.getContactEmail() != null) {
-//            if (user.getContactEmail() != null) {
-//                if (!user.getContactEmail().toLowerCase().equals(request.getContactEmail())) {
-//                    user.setContactEmail(request.getContactEmail());
-//                }
-//            }
-//            else  user.setContactEmail(request.getContactEmail());
-//        }
-//
-//        if (request.getFullName() != null && !user.getFullName().toLowerCase().equals(request.getFullName())) {
-//            user.setFullName(request.getFullName());
-//        }
-//        if (request.getPhoneNumber() != null && !user.getPhoneNumber().toLowerCase().equals(request.getPhoneNumber())) {
-//            user.setPhoneNumber(request.getPhoneNumber());
-//        }
-//        if (request.getEmail() != null && !user.getEmail().toLowerCase().equals(request.getEmail().toLowerCase())) {
-//            user.setEmail(request.getEmail());
-//        }
-//        if (request.getNewPassword() != null && !bCryptPasswordEncoder.matches(request.getNewPassword(), user.getPassword())) {
-//            user.setPassword(bCryptPasswordEncoder.encode(request.getNewPassword()));
-//        }
+
         repository.save(user);
     }
 //
@@ -172,11 +168,65 @@ public class UserService {
 //        return jwtUtil.updateToken(token);
 //    }
 
-    public void resetPassword(User user) {
-        user.setPassword(bCryptPasswordEncoder.encode("Aq1Sw2De3"));
-        repository.save(user);
-        mailSender.sendMail(user.getEmail(), "New password: Aq1Sw2De3");
+    private int getPasswordExpirationHours() throws SystemConfigurationException {
+        Object object = systemConfigurationService.getValueByKey(SystemConfigurationKeys.Password.RESET_LINK_TIMEOUT);
+        return Integer.parseInt((String) object);
+    }
 
+    public String createPasswordResetTokenForUser(User user) throws FailedToCreateResetPasswordTokenException {
+        try {
+            String token = UUID.randomUUID().toString();
+            PasswordResetTokenDAO myToken = new PasswordResetTokenDAO(user, token, getPasswordExpirationHours());
+            passwordTokenRepository.save(myToken);
+            return token;
+        } catch (Exception ex) {
+            throw new FailedToCreateResetPasswordTokenException();
+        }
+    }
+
+
+
+
+    public UserContext findUserByResetPasswordToken(String resetPasswordToken) {
+        PasswordResetTokenDAO passwordResetTokenDAO = passwordTokenRepository.findPasswordResetTokenDAOByToken(resetPasswordToken);
+        if (passwordResetTokenDAO != null) {
+            return UserContext.create(passwordResetTokenDAO.getUser());
+        }
+        return null;
+    }
+
+    public void updateUserEmail(UserContext userContext, String newEmail, String updateEmailToken) throws FailedToUpdateUserException {
+        User userDAO = repository.findOneById(userContext.getUserId());
+
+        PasswordResetTokenDAO tokenDAO = passwordTokenRepository.findPasswordResetTokenDAOByToken(updateEmailToken);
+        if (userDAO == null) {
+            throw new FailedToUpdateUserException("User does not exist");
+        }
+        if (tokenDAO == null) {
+            throw new FailedToUpdateUserException("Token does not exist");
+        }
+        if (tokenDAO.getExpiryDate().before(new Date())) {
+            throw new FailedToUpdateUserException("Token expired");
+        }
+        userDAO.setEmail(newEmail);
+        repository.save(userDAO);
+
+    }
+    public void updateUserPassword(UserContext userContext, String newPassword, String updatePasswordToken) throws FailedToUpdateUserException {
+        User userDAO = repository.findOneById(userContext.getUserId());
+
+        PasswordResetTokenDAO tokenDAO = passwordTokenRepository.findPasswordResetTokenDAOByToken(updatePasswordToken);
+        if (userDAO == null) {
+            throw new FailedToUpdateUserException("User does not exist");
+        }
+        if (tokenDAO == null) {
+            throw new FailedToUpdateUserException("Token does not exist");
+        }
+        if (tokenDAO.getExpiryDate().before(new Date())) {
+            throw new FailedToUpdateUserException("Token expired");
+        }
+        userDAO.setPassword(bCryptPasswordEncoder.encode(newPassword));
+        repository.save(userDAO);
     }
 }
 

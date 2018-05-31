@@ -1,25 +1,21 @@
 package com.edsson.expopromoter.api.controller;
+
+import com.edsson.expopromoter.api.context.Messages;
 import com.edsson.expopromoter.api.context.UserContext;
 import com.edsson.expopromoter.api.core.service.JwtUtil;
-import com.edsson.expopromoter.api.exceptions.EntityAlreadyExistException;
-import com.edsson.expopromoter.api.exceptions.FailedToLoginException;
-import com.edsson.expopromoter.api.exceptions.FailedToRegisterException;
-import com.edsson.expopromoter.api.exceptions.RequestValidationException;
+import com.edsson.expopromoter.api.exceptions.*;
 import com.edsson.expopromoter.api.model.User;
 import com.edsson.expopromoter.api.model.json.GenericResponse;
 import com.edsson.expopromoter.api.model.json.JsonUser;
-import com.edsson.expopromoter.api.request.LoginRequest;
-import com.edsson.expopromoter.api.request.RegisterDeviceRequest;
-import com.edsson.expopromoter.api.request.RegistrationRequest;
+import com.edsson.expopromoter.api.operator.MailSender;
+import com.edsson.expopromoter.api.request.*;
 import com.edsson.expopromoter.api.service.LoginService;
 import com.edsson.expopromoter.api.service.RoleService;
 import com.edsson.expopromoter.api.service.UserService;
-import com.edsson.expopromoter.api.validator.LoginRequestValidator;
-import com.edsson.expopromoter.api.validator.UserRegistrationRequestValidator;
+import com.edsson.expopromoter.api.validator.*;
 import io.jsonwebtoken.JwtException;
 import io.swagger.annotations.Api;
 import javassist.NotFoundException;
-
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -33,7 +29,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @RestController
@@ -41,9 +36,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 @Scope(value = WebApplicationContext.SCOPE_SESSION, proxyMode = ScopedProxyMode.TARGET_CLASS)
 @Api(value = "auth", description = "Auth controller")
 public class AuthController {
-
-//    final static Logger logger = Logger.getLogger(AuthController.class);
-    private static final Logger LOG = Logger.getLogger(AuthController.class);
+    final static Logger logger = Logger.getLogger(AuthController.class);
 
     private final UserRegistrationRequestValidator userRegistrationRequestValidator;
     private final UserService userService;
@@ -51,22 +44,26 @@ public class AuthController {
     private final JwtUtil jwtService;
     private final LoginRequestValidator loginRequestValidator;
     private final LoginService loginService;
+    private final ResetPasswordValidator resetPasswordValidator;
+    private final MailSender mailSender;
+    private final UpdatePasswordRequestValidator updatePasswordRequestValidator;
+    private final UpdateEmailRequestValidator updateEmailRequestValidator;
 
     @Autowired
-    public AuthController(LoginService loginService, LoginRequestValidator loginRequestValidator, UserRegistrationRequestValidator userRegistrationRequestValidator, UserService userService, RoleService roleService, JwtUtil jwtService) {
+    public AuthController(UpdateEmailRequestValidator updateEmailRequestValidator, UpdatePasswordRequestValidator updatePasswordRequestValidator, MailSender mailSender, ResetPasswordValidator resetPasswordValidator, LoginService loginService, LoginRequestValidator loginRequestValidator, UserRegistrationRequestValidator userRegistrationRequestValidator, UserService userService, RoleService roleService, JwtUtil jwtService) {
         this.userRegistrationRequestValidator = userRegistrationRequestValidator;
         this.loginService = loginService;
         this.userService = userService;
         this.roleService = roleService;
         this.jwtService = jwtService;
         this.loginRequestValidator = loginRequestValidator;
-
+        this.resetPasswordValidator = resetPasswordValidator;
+        this.mailSender = mailSender;
+        this.updatePasswordRequestValidator = updatePasswordRequestValidator;
+        this.updateEmailRequestValidator = updateEmailRequestValidator;
     }
 
 
-    public static void doSmth(){
-        LOG.info("AuthController is created!!!");
-    }
     @CrossOrigin
     @RequestMapping(
             value = "/registration",
@@ -77,7 +74,7 @@ public class AuthController {
     public JsonUser registration(@RequestBody RegistrationRequest registrationRequest,
                                  BindingResult bindingResult,
                                  HttpServletResponse response) throws FailedToRegisterException, RequestValidationException, EntityAlreadyExistException {
-//        logger.info("Call controller method: /registration ");
+        logger.info("Call controller method: /registration ");
         userRegistrationRequestValidator.validate(registrationRequest, bindingResult);
         if (bindingResult.hasErrors()) {
             throw new RequestValidationException(bindingResult);
@@ -166,10 +163,86 @@ public class AuthController {
     }
 
 
-    @CrossOrigin
-    @RequestMapping(value = "/reset_password", method = GET, produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
-    public GenericResponse resetPassword(HttpServletRequest request) {
-        userService.resetPassword((User) request.getAttribute("user"));
-        return new GenericResponse("Ok", new String[]{});
+    @RequestMapping(
+            value = "/reset_password",
+            method = POST,
+            produces = APPLICATION_JSON_VALUE,
+            consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE}
+    )
+    public GenericResponse resetPassword(@RequestBody ResetPasswordRequest credentials, BindingResult bindingResult) throws Exception {
+        String token = sendUpdateMessage(credentials, bindingResult);
+
+
+        mailSender.operateMessage(credentials.getEmail(), token, true);
+        return new GenericResponse(Messages.MESSAGE_PASSWORD_RESET_SUCCESS, new String[]{credentials.getEmail()});
+    }
+
+    @RequestMapping(
+            value = "/update_password",
+            method = POST,
+            produces = APPLICATION_JSON_VALUE,
+            consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE}
+    )
+    public GenericResponse updatePassword(@RequestBody UpdatePasswordRequest updatePasswordRequest,
+                                          BindingResult bindingResult) throws Exception {
+        updatePasswordRequestValidator.validate(updatePasswordRequest, bindingResult);
+        if (bindingResult.hasErrors()) {
+            throw new RequestValidationException(bindingResult);
+        }
+
+        UserContext user = userService.findUserByResetPasswordToken(updatePasswordRequest.getUpdatePasswordToken());
+        if (user == null) {
+            throw new NoSuchUserException("No user for this reset password token exists");
+        }
+        userService.updateUserPassword(user, updatePasswordRequest.getNewPassword(), updatePasswordRequest.getUpdatePasswordToken());
+        logger.info("Password updated for user: " + user.getUserId());
+        return new GenericResponse(Messages.MESSAGE_PASSWORD_UPDATE_SUCCESS, new String[]{user.getEmail()});
+    }
+
+
+    @RequestMapping(value = "/reset_email", method = POST, produces = APPLICATION_JSON_VALUE, consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE})
+    public GenericResponse resetEmail(@RequestBody ResetPasswordRequest credentials,
+                                      BindingResult bindingResult) throws Exception {
+
+        String token = sendUpdateMessage(credentials, bindingResult);
+        mailSender.operateMessage(credentials.getEmail(), token, false);
+        return new GenericResponse(Messages.MESSAGE_EMAIL_RESET_SUCCESS, new String[]{credentials.getEmail()});
+    }
+
+
+    @RequestMapping(value = "/update_email", method = POST, produces = APPLICATION_JSON_VALUE, consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE})
+    public GenericResponse updateEmail(@RequestBody UpdateEmailRequest updateEmailRequest,
+                                       BindingResult bindingResult) throws Exception {
+
+        updateEmailRequestValidator.validate(updateEmailRequest, bindingResult);
+        if (bindingResult.hasErrors()) {
+            throw new RequestValidationException(bindingResult);
+        }
+
+        UserContext user = userService.findUserByResetPasswordToken(updateEmailRequest.getUpdateEmailToken());
+        if (user == null) {
+            throw new NoSuchUserException("No user for this reset password token exists");
+        }
+        userService.updateUserEmail(user,updateEmailRequest.getNewEmail(),updateEmailRequest.getUpdateEmailToken());
+        logger.info("Password updated for user: " + user.getUserId());
+        return new GenericResponse(Messages.MESSAGE_PASSWORD_UPDATE_SUCCESS, new String[]{user.getEmail()});
+    }
+
+
+    private String sendUpdateMessage(ResetPasswordRequest credentials, BindingResult bindingResult) throws RequestValidationException, NoSuchUserException, FailedToCreateResetPasswordTokenException {
+        resetPasswordValidator.validate(credentials, bindingResult);
+        if (bindingResult.hasErrors()) {
+            throw new RequestValidationException(bindingResult);
+        }
+
+        String userEmail = credentials.getEmail();
+        User user = userService.findOneByEmail(userEmail);
+        if (user == null) {
+            throw new NoSuchUserException(userEmail);
+        }
+        String token = userService.createPasswordResetTokenForUser(user);
+
+        logger.info("START MAILSERVICE");
+        return token;
     }
 }

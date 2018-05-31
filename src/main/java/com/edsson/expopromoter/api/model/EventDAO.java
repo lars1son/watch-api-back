@@ -52,7 +52,6 @@ public class EventDAO extends BaseModel {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
     private List<TicketDAO> tickets;
 
-    //    @Column(name = "userCreatorId", nullable = true)
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_creator_id", referencedColumnName = "id", nullable = false)
     private User userCreatorId;

@@ -4,35 +4,79 @@ package com.edsson.expopromoter.api.operator;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.mail.javamail.MimeMessagePreparator;
 import org.springframework.stereotype.Component;
+
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 @Component("javasampleapproachMailSender")
 public class MailSender {
+    private final static Logger logger = Logger.getLogger(MailSender.class);
 
-    @Autowired
-    JavaMailSender javaMailSender;
+
     @Value("${spring.mail.username}")
     private String sender;
 
-    private static String subject = "Password reset";
+    @Value("${expopromoter.system.config.password.reset_ling_base_url}")
+    private String websiteUrlPassword;
 
-    Logger logger = Logger.getLogger(this.getClass());
+    @Value("${expopromoter.system.config.password.reset_ling_base_email}")
+    private String websiteUrlEmail;
 
-    public void sendMail(String to, String body) {
+    private static final long MAIL_SEND_DELAY = 3000;
 
-        SimpleMailMessage mail = new SimpleMailMessage();
 
-        mail.setFrom(sender);
-        mail.setTo(to);
-        mail.setSubject(subject);
-        mail.setText(body);
+    private Queue<MimeMessagePreparator> queue = new LinkedBlockingQueue<>();
 
-        logger.info("Sending...");
 
-        javaMailSender.send(mail);
+    private static String subjectPasswordReset = "Password reset";
+    private static String subjectEmailReset = "Email reset";
 
-        logger.info("Done!");
+    private final JavaMailSender javaMailSender;
+
+    @Autowired
+    public MailSender(JavaMailSender javaMailSender) {
+        this.javaMailSender = javaMailSender;
     }
+
+    public void operateMessage(String email, String token, boolean pas) {
+        String url;
+        String subject;
+        if (pas) {
+            url = websiteUrlPassword + token;
+            subject = subjectPasswordReset;
+        } else {
+            url = websiteUrlEmail + token;
+            subject = subjectEmailReset;
+        }
+
+        MimeMessagePreparator preparator = mimeMessage -> {
+            MimeMessageHelper message = new MimeMessageHelper(mimeMessage);
+            message.setTo(email);
+            message.setSubject(subject);
+            message.setText("Click here to reset your password: <a href=\"" + url + "\">" + url + "</a>", true);
+            message.setFrom(sender);
+
+        };
+        send(preparator);
+    }
+
+    public void send(MimeMessagePreparator preparator) {
+        try {
+            this.javaMailSender.send(preparator);
+            logger.info(String.format("Mail successfully sent. Mail to send in queue: %d", queue.size()));
+        } catch (Exception ex) {
+            logger.warn("Exception sending mail");
+        }
+    }
+
+
+
+    private void addToQueue(MimeMessagePreparator preparator) {
+        queue.offer(preparator);
+    }
+
 }

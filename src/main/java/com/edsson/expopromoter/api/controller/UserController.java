@@ -164,7 +164,7 @@ public class UserController {
             consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE},
             value = "/create_event")
     public JsonUrl createTicket(@RequestBody CreateEventRequest createEventRequest, HttpResponse response,HttpServletRequest request) throws EntityAlreadyExistException, EventBadCredentialsException, ParseException, FileNotFoundException, SystemConfigurationException, IOException, NotFoundException {
-//        response.setHeader("Token", (String) request.getAttribute("Token"));
+
         log.info("/Create_event request");
         return service.createEventDAO(createEventRequest, (User) request.getAttribute("user"));
 
@@ -186,13 +186,13 @@ public class UserController {
     }
 
 
-    @RequestMapping(method = RequestMethod.POST, value = "/update")
+    @RequestMapping(method = RequestMethod.POST, value = "/update_user_info")
     public GenericResponse updateUser(@RequestBody UserUpdateRequest userUpdateRequest,HttpServletRequest request, HttpResponse response) throws IOException, IllegalAccessException, NoSuchMethodException, InvocationTargetException, InstantiationException {
         userService.update(userUpdateRequest, (User) request.getAttribute("user"));
         return new GenericResponse("User update success", new String[]{});
     }
 
-
+//
 //    @RequestMapping(
 //            value = "/update_password",
 //            method = POST,

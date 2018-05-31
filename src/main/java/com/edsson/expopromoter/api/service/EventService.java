@@ -4,6 +4,7 @@ package com.edsson.expopromoter.api.service;
 import com.edsson.expopromoter.api.config.SystemConfigurationKeys;
 import com.edsson.expopromoter.api.exceptions.EntityAlreadyExistException;
 import com.edsson.expopromoter.api.exceptions.EventBadCredentialsException;
+import com.edsson.expopromoter.api.exceptions.NoSuchEventPerUserException;
 import com.edsson.expopromoter.api.exceptions.SystemConfigurationException;
 import com.edsson.expopromoter.api.model.EventDAO;
 import com.edsson.expopromoter.api.model.User;
@@ -98,14 +99,15 @@ public class EventService {
                 logger.info("New event saved! ");
                 eventDAO = repository.findByName(eventDAO.getName());
 
-                //For local storage
+
+                if (createEventRequest.getImageBase64() != null) {
+                    //For local storage
 //                String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\event_" + eventDAO.getId();
 //              AMAZON
 
-
-                String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "/event_" + eventDAO.getId();
-                eventDAO.setPhotoPath(imageOperator.saveImage(createEventRequest.getImageBase64(), path, eventDAO.getName()));
-
+                    String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "/event_" + eventDAO.getId();
+                    eventDAO.setPhotoPath(imageOperator.saveImage(createEventRequest.getImageBase64(), path, eventDAO.getName()));
+                }
 
                 repository.save(eventDAO);
 
@@ -122,7 +124,7 @@ public class EventService {
     }
 
     public JsonUrl update(CreateEventRequest eventDAO, HttpServletRequest request) throws NotFoundException, SystemConfigurationException, IOException, ParseException {
-//        User user = userService.findOneByEmail(eventDAO.get);
+
         User user = (User) request.getAttribute("user");
         if (user != null) {
 
@@ -204,5 +206,14 @@ public class EventService {
             }
         }
         return result;
+    }
+
+    public void deleteEvent(int id, User user) throws NoSuchEventPerUserException {
+        EventDAO eventDAO = repository.findById(id);
+        if (user.getEventDAOList().contains(eventDAO)) {
+            repository.removeEventDAOById(id);
+        } else {
+            throw new NoSuchEventPerUserException(user.getEmail());
+        }
     }
 }

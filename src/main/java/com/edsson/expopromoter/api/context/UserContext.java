@@ -4,6 +4,8 @@ import com.edsson.expopromoter.api.model.RoleDAO;
 import com.edsson.expopromoter.api.model.User;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 public class UserContext {
 
@@ -17,7 +19,7 @@ public class UserContext {
     private String fullName;
     private String contactEmail;
     private long expiration;
-
+    private Set<Integer> listEventID;
 
     private UserContext() {
 
@@ -34,6 +36,7 @@ public class UserContext {
         userContext.phoneNumber=userDAO.getPhoneNumber();
         userContext.contactEmail=userDAO.getContactEmail();
         userContext.fullName=userDAO.getFullName();
+        userContext.listEventID=userDAO.getEventDAOListID();
         return userContext;
     }
 
@@ -118,6 +121,15 @@ public class UserContext {
             return true;
 
         return false;
+    }
+
+
+    public Set<Integer> getListEventID() {
+        return listEventID;
+    }
+
+    public void setListEventID(Set<Integer> listEventID) {
+        this.listEventID = listEventID;
     }
 
     public void setExpiration(long expiration) {

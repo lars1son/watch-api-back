@@ -43,6 +43,8 @@ public class JwtFilter extends GenericFilterBean {
 //        allowedPaths.add("/users/create");
         allowedPaths.add("/auth/login");
         allowedPaths.add("/auth/registration");
+allowedPaths.add("/auth/reset_password");
+        allowedPaths.add("/auth/update_password");
 
 //        allowedPaths.add("/event/");
         if (allowedPaths.contains(httpRequest.getRequestURI())) {

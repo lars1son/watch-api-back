@@ -7,12 +7,14 @@ import org.hibernate.validator.constraints.Email;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 @SuppressWarnings("unused")
 @Entity
 @Table(name = "users")
+
 @Inheritance(strategy=InheritanceType.TABLE_PER_CLASS)
 public class User extends BaseModel {
 //public class User{
@@ -75,6 +77,13 @@ public class User extends BaseModel {
 
     public Set<EventDAO> getEventDAOList() {
         return eventDAOList;
+    }
+    public Set<Integer> getEventDAOListID(){
+        Set<Integer> list= new HashSet<>();
+        for( EventDAO eventDAO: eventDAOList){
+            list.add(eventDAO.getId());
+        }
+        return list;
     }
 
     public void addToTicketDAOList(TicketDAO ticket){
