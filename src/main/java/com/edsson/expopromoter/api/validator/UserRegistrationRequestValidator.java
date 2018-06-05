@@ -19,20 +19,13 @@ import static com.edsson.expopromoter.api.validator.ValidatorHelper.*;
 @Component
 public class UserRegistrationRequestValidator implements Validator {
 
-
     private final UserService userService;
-
-
-
-    private Pattern passwordPattern;
-
+//    private Pattern passwordPattern;
     @Autowired
     public UserRegistrationRequestValidator(UserService userService) {
         this.userService = userService;
-
-
         //Todo: Maybe password pattern functionality will appear
-        passwordPattern =  Pattern.compile(PASSWORD_PATTERN);
+//        passwordPattern =  Pattern.compile(PASSWORD_PATTERN);
     }
 
     @Override
@@ -60,10 +53,10 @@ public class UserRegistrationRequestValidator implements Validator {
             if (password.length() < MIN_PASSWORD_SIZE || password.length() > MAX_PASSWORD_SIZE) {
                 errors.rejectValue("password", "Size.userForm.password");
             }
-            Matcher matcher = passwordPattern.matcher(password);
-            if (!matcher.matches()){
-                errors.rejectValue("password", "Pattern.userForm.password");
-            }
+//            Matcher matcher = passwordPattern.matcher(password);
+//            if (!matcher.matches()){
+//                errors.rejectValue("password", "Pattern.userForm.password");
+//            }
         }
     }
 }

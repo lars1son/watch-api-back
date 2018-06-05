@@ -46,12 +46,12 @@ public class TicketService {
         User user = (User) request.getAttribute("user");
         if (!user.getTickets().contains(ticket)) {
 //            String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\user_" + user.getId().intValue();
-            String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "/user_" + user.getId().intValue();
+            String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultUserTicketImagePath.PATH) + user.getId().intValue();
 
             EventDAO eventDAO = eventService.findOneById(addTicketRequest.getEventId());
 
             //Local storage
-            imageOperator.saveImage(addTicketRequest.getImageBase64(), path, eventDAO.getName() );
+            imageOperator.saveImage(addTicketRequest.getImageBase64(), path );
 
 
             //Amazon Storage

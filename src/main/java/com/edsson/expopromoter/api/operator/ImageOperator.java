@@ -23,22 +23,22 @@ public class ImageOperator {
         this.systemConfigurationService = systemConfigurationService;
     }
 
-    public String saveImage(String imageBase64, String path, String fileName) throws IOException, SystemConfigurationException {
+    public String saveImage(String imageBase64, String path) throws IOException, SystemConfigurationException {
 //        String crntImage = imageBase64;
 //         path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\" + id;
         File files = new File(path);
-        if (!files.exists()) {
-            if (files.mkdirs()) {
-                System.out.println("Multiple directories are created!");
-            } else {
-                System.out.println("Failed to create multiple directories!");
-            }
-        }
+//        if (!files.exists()) {
+//            if (files.mkdirs()) {
+//                System.out.println("Multiple directories are created!");
+//            } else {
+//                System.out.println("Failed to create multiple directories!");
+//            }
+//        }
 
 
 //        path = path + "\\" + fileName + "_" + FileInfoService.findFileExtension(imageBase64);
 
-        path = path + "/" + fileName.replace(" ","") + "_" + FileInfoService.findFileExtension(imageBase64);
+        path = path + FileInfoService.findFileExtension(imageBase64);
 
         byte[] data = Base64.decodeBase64(imageBase64);
 

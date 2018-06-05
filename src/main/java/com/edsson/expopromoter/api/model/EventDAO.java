@@ -1,6 +1,8 @@
 package com.edsson.expopromoter.api.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -21,17 +23,27 @@ public class EventDAO extends BaseModel {
     @Column(name = "ticket_url", nullable = false)
     private String ticketUrl;
 
-    @Basic
-    @Column(name = "date_start", nullable = false)
+
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "date_start", columnDefinition = "DATETIME")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private Date dateStart;
 
-    @Basic
-    @Column(name = "date_end", nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "date_end", columnDefinition = "DATETIME")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private Date dateEnd;
 
     @Basic
-    @Column(name = "photo_path", nullable = true)
+    @Column(name = "cover_photo_path", nullable = true)
     private String photoPath;
+
+
+
+    @Basic
+    @Column(name = "info_photo_path", nullable = true)
+    private String infoPhotoPath;
     @Basic
     @Column(name = "event_website", nullable = true)
     private String eventWebsite;
@@ -47,6 +59,10 @@ public class EventDAO extends BaseModel {
     @Basic
     @Column(name = "contacts", nullable = true)
     private String contacts;
+
+    @Basic
+    @Column(name = "event_info_url", nullable = true)
+    private String eventInfoUrl;
 
     @JsonManagedReference
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
@@ -102,6 +118,13 @@ public class EventDAO extends BaseModel {
         this.name = name;
     }
 
+    public String getEventInfoUrl() {
+        return eventInfoUrl;
+    }
+
+    public void setEventInfoUrl(String eventInfoUrl) {
+        this.eventInfoUrl = eventInfoUrl;
+    }
 
     public Date getDateStart() {
         return dateStart;
@@ -179,6 +202,13 @@ public class EventDAO extends BaseModel {
 
     }
 
+    public String getInfoPhotoPath() {
+        return infoPhotoPath;
+    }
+
+    public void setInfoPhotoPath(String infoPhotoPath) {
+        this.infoPhotoPath = infoPhotoPath;
+    }
 
     @Override
     public boolean equals(Object o) {

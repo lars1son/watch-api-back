@@ -1,6 +1,7 @@
 package com.edsson.expopromoter.api.model.json;
 
 import com.edsson.expopromoter.api.context.UserContext;
+import com.edsson.expopromoter.api.model.EventDAO;
 import com.edsson.expopromoter.api.model.User;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
@@ -17,13 +18,13 @@ public class JsonUser {
     private String fullName;
     private String phoneNumber;
     private String contactEmail;
-    private Set<Integer> listEventID;
+    private Set<JsonEventInfo> listEventID;
 
     public JsonUser() {
 
     }
 
-    public JsonUser(String email, long id,  String fullName,String phoneNumber, String contactEmail, Set<Integer> list) {
+    public JsonUser(String email, long id,  String fullName,String phoneNumber, String contactEmail, Set<JsonEventInfo> list) {
         this.email = email;
         this.id = id;
 
@@ -48,7 +49,7 @@ public class JsonUser {
                 userContext.getFullName(),
                 userContext.getPhoneNumber(),
                 userContext.getContactEmail(),
-                userContext.getListEventID()
+                userContext.getListEvent()
         );
     }
 //    public static JsonUser fullInfoFrom(UserContext userContext) {

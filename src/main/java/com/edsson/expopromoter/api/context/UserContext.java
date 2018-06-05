@@ -2,9 +2,9 @@ package com.edsson.expopromoter.api.context;
 
 import com.edsson.expopromoter.api.model.RoleDAO;
 import com.edsson.expopromoter.api.model.User;
+import com.edsson.expopromoter.api.model.json.JsonEventInfo;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 public class UserContext {
@@ -19,7 +19,7 @@ public class UserContext {
     private String fullName;
     private String contactEmail;
     private long expiration;
-    private Set<Integer> listEventID;
+    private Set<JsonEventInfo> listEvent;
 
     private UserContext() {
 
@@ -29,14 +29,16 @@ public class UserContext {
         UserContext userContext = new UserContext();
         userContext.id = userDAO.getId();
         userContext.email = userDAO.getEmail();
-        userContext.passwordHash = userDAO.getPassword();
-        userContext.role=userDAO.getRole();
-        userContext.createdAt=userDAO.getCreatedAt();
-        userContext.updatedAt=userDAO.getUpdatedAt();
-        userContext.phoneNumber=userDAO.getPhoneNumber();
-        userContext.contactEmail=userDAO.getContactEmail();
-        userContext.fullName=userDAO.getFullName();
-        userContext.listEventID=userDAO.getEventDAOListID();
+        if (userDAO.getPassword() != null) {
+            userContext.passwordHash = userDAO.getPassword();
+        }
+        userContext.role = userDAO.getRole();
+        userContext.createdAt = userDAO.getCreatedAt();
+        userContext.updatedAt = userDAO.getUpdatedAt();
+        userContext.phoneNumber = userDAO.getPhoneNumber();
+        userContext.contactEmail = userDAO.getContactEmail();
+        userContext.fullName = userDAO.getFullName();
+        userContext.listEvent = userDAO.getEventDAOListID();
         return userContext;
     }
 
@@ -124,12 +126,12 @@ public class UserContext {
     }
 
 
-    public Set<Integer> getListEventID() {
-        return listEventID;
+    public Set<JsonEventInfo> getListEvent() {
+        return listEvent;
     }
 
-    public void setListEventID(Set<Integer> listEventID) {
-        this.listEventID = listEventID;
+    public void setListEvent(Set<JsonEventInfo> listEvent) {
+        this.listEvent = listEvent;
     }
 
     public void setExpiration(long expiration) {

@@ -20,11 +20,18 @@ public class MailSender {
     @Value("${spring.mail.username}")
     private String sender;
 
-    @Value("${expopromoter.system.config.password.reset_ling_base_url}")
+    @Value("${expopromoter.system.config.password.web.reset_ling_base_url}")
     private String websiteUrlPassword;
 
-    @Value("${expopromoter.system.config.password.reset_ling_base_email}")
+    @Value("${expopromoter.system.config.email.web.reset_ling_base_url}")
     private String websiteUrlEmail;
+
+
+    @Value("${expopromoter.system.config.password.mobile.reset_ling_base_url}")
+    private String mobileUrlPassword;
+
+    @Value("${expopromoter.system.config.email.mobile.reset_ling_base_url}")
+    private String mobileUrlEmail;
 
     private static final long MAIL_SEND_DELAY = 3000;
 
@@ -42,14 +49,25 @@ public class MailSender {
         this.javaMailSender = javaMailSender;
     }
 
-    public void operateMessage(String email, String token, boolean pas) {
+    public void operateMessage(String email, String client, String token, boolean pas) {
         String url;
         String subject;
+        String deviceUrl;
+
+
         if (pas) {
-            url = websiteUrlPassword + token;
+            if (client != "mobile") {
+                url = websiteUrlPassword + token;
+            } else {
+                url = mobileUrlPassword + token;
+            }
             subject = subjectPasswordReset;
         } else {
-            url = websiteUrlEmail + token;
+            if (client != "mobile") {
+                url = websiteUrlEmail + token;
+            } else {
+                url = mobileUrlEmail + token;
+            }
             subject = subjectEmailReset;
         }
 
@@ -72,7 +90,6 @@ public class MailSender {
             logger.warn("Exception sending mail");
         }
     }
-
 
 
     private void addToQueue(MimeMessagePreparator preparator) {

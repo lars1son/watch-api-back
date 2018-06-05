@@ -16,10 +16,7 @@ import com.edsson.expopromoter.api.operator.ImageOperator;
 import com.edsson.expopromoter.api.operator.MailSender;
 import com.edsson.expopromoter.api.repository.PasswordTokenRepository;
 import com.edsson.expopromoter.api.repository.UserRepository;
-import com.edsson.expopromoter.api.request.LoginRequest;
-import com.edsson.expopromoter.api.request.RegisterDeviceRequest;
-import com.edsson.expopromoter.api.request.RegistrationRequest;
-import com.edsson.expopromoter.api.request.UserUpdateRequest;
+import com.edsson.expopromoter.api.request.*;
 import com.edsson.expopromoter.api.service.system_configuration.SystemConfigurationService;
 import com.edsson.expopromoter.api.service.system_configuration.SystemConfigurationServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -151,9 +148,6 @@ public class UserService {
                         }
                     }
                     Method setMethod = User.class.getDeclaredMethod(m.getName().replace("get", "set"), String.class);
-                    if (setMethod.getName().toLowerCase().contains("password")) {
-                        setMethod.invoke(user, bCryptPasswordEncoder.encode((String) m.invoke(request)));
-                    }
                     setMethod.invoke(user, m.invoke(request));
 
                 }
@@ -185,8 +179,6 @@ public class UserService {
     }
 
 
-
-
     public UserContext findUserByResetPasswordToken(String resetPasswordToken) {
         PasswordResetTokenDAO passwordResetTokenDAO = passwordTokenRepository.findPasswordResetTokenDAOByToken(resetPasswordToken);
         if (passwordResetTokenDAO != null) {
@@ -212,6 +204,7 @@ public class UserService {
         repository.save(userDAO);
 
     }
+
     public void updateUserPassword(UserContext userContext, String newPassword, String updatePasswordToken) throws FailedToUpdateUserException {
         User userDAO = repository.findOneById(userContext.getUserId());
 
@@ -227,6 +220,18 @@ public class UserService {
         }
         userDAO.setPassword(bCryptPasswordEncoder.encode(newPassword));
         repository.save(userDAO);
+    }
+
+    public void merge(User user, MergeRequest mergeRequest) throws EntityAlreadyExistException {
+        RoleDAO roleDAO = roleService.findRoleDAOByRole(RolesConfiguration.ROLE_USER);
+
+        user.setEmail(mergeRequest.getEmail());
+        user.setPassword(bCryptPasswordEncoder.encode(mergeRequest.getPassword()));
+        user.setRole(roleDAO);
+        if (repository.findOneByEmail(user.getEmail()) == null) {
+            repository.save(user);
+        } else throw new EntityAlreadyExistException("User " + user.getEmail() + "already exists");
+
     }
 }
 

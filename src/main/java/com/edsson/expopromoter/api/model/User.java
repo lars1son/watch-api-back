@@ -1,34 +1,29 @@
 package com.edsson.expopromoter.api.model;
 
+import com.edsson.expopromoter.api.model.json.JsonEventInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.validator.constraints.Email;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @SuppressWarnings("unused")
 @Entity
 @Table(name = "users")
 
-@Inheritance(strategy=InheritanceType.TABLE_PER_CLASS)
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public class User extends BaseModel {
-//public class User{
+    //public class User{
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @NotNull
     @JsonIgnore
     @Column(name = "password")
     private String password;
 
-    @NotNull
-    @Email
+    @Column(name = "email")
     private String email;
 
     @Column(name = "phone_number")
@@ -42,7 +37,7 @@ public class User extends BaseModel {
 //    @CollectionTable(name="user_roles", joinColumns = @JoinColumn(name = "id"))
 //    private Set<Role> roles = new TreeSet<>();
 
-//    @Column(name = "role")
+    //    @Column(name = "role")
 //    @Enumerated(EnumType.ORDINAL)
     @JsonIgnore
     @ManyToOne(fetch = FetchType.EAGER)
@@ -59,45 +54,49 @@ public class User extends BaseModel {
     private Set<EventDAO> eventDAOList;
 
 
-
-    public User() {}
+    public User() {
+    }
 
 
     public void setId(Long id) {
         this.id = id;
     }
 
-    public RoleDAO getRoleDAO() {
-        return roleDAO;
-    }
-
-    public void setRoleDAO(RoleDAO roleDAO) {
-        this.roleDAO = roleDAO;
-    }
 
     public Set<EventDAO> getEventDAOList() {
         return eventDAOList;
     }
-    public Set<Integer> getEventDAOListID(){
-        Set<Integer> list= new HashSet<>();
-        for( EventDAO eventDAO: eventDAOList){
-            list.add(eventDAO.getId());
+
+    public Set<JsonEventInfo> getEventDAOListID() {
+        Set<JsonEventInfo> list = new HashSet<>();
+        if (eventDAOList == null) {
+            return null;
+        }
+        for (EventDAO eventDAO : eventDAOList) {
+            list.add(JsonEventInfo.from(eventDAO));
         }
         return list;
     }
 
-    public void addToTicketDAOList(TicketDAO ticket){
+    public void setEventDAOList(Set<EventDAO> eventDAOList) {
+        this.eventDAOList = eventDAOList;
+    }
+
+    public void addToTicketDAOList(TicketDAO ticket) {
         this.tickets.add(ticket);
     }
-//    public void setEventDAOList(List<EventDAO> eventDAOList) {
+
+    //    public void setEventDAOList(List<EventDAO> eventDAOList) {
 //        this.eventDAOList = eventDAOList;
 //    }
-    public void addToEventDAOList(EventDAO eventDAO){
+    public void addToEventDAOList(EventDAO eventDAO) {
         this.eventDAOList.add(eventDAO);
     }
-    public void deleteRecordFromEventDAOList(EventDAO eventDAO){
+
+    public void deleteRecordFromEventDAOList(EventDAO eventDAO) {
         this.eventDAOList.remove(eventDAO);
     }
+
     public Long getId() {
         return id;
     }

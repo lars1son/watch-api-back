@@ -12,8 +12,8 @@ public class JsonEventInfo {
     private int id;
     private String name;
     private String ticketUrl;
-    private Date dateStart;
-    private Date dateEnd;
+    private String dateStart;
+    private String dateEnd;
     private String photo;
     private String eventWebsite;
     private String eventLocation;
@@ -29,8 +29,8 @@ public class JsonEventInfo {
         this.id = id;
         this.name = name;
         this.ticketUrl = ticketUrl;
-        this.dateStart = dateStart;
-        this.dateEnd = dateEnd;
+        this.dateStart = String.valueOf(dateStart);
+        this.dateEnd = String.valueOf(dateEnd);
         this.photo = photoPath;
         this.eventWebsite = eventWebsite;
         this.eventLocation = eventLocation;

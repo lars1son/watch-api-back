@@ -6,6 +6,7 @@ import com.edsson.expopromoter.api.model.User;
 import com.edsson.expopromoter.api.model.json.GenericResponse;
 import com.edsson.expopromoter.api.model.json.JsonEventInfo;
 import com.edsson.expopromoter.api.operator.ImageOperator;
+import com.edsson.expopromoter.api.request.AddGPSRequest;
 import com.edsson.expopromoter.api.request.DeleteEventRequest;
 import com.edsson.expopromoter.api.request.GetUpdatedEventsRequest;
 import com.edsson.expopromoter.api.service.EventService;
@@ -40,23 +41,38 @@ public class EventController {
         this.userService=userService;
     }
 
+
     @RequestMapping(method = RequestMethod.GET,
             value = "/{id}")
     public JsonEventInfo getEventInfo(@PathVariable("id") int id, HttpServletRequest request, HttpResponse response) throws IOException {
 //        response.setHeader("Token", (String) request.getAttribute("Token"));
         return service.buildWithImage(service.findOneById(id));
     }
+
+
+
     @RequestMapping(method = RequestMethod.POST, value = "/update")
     public List<JsonEventInfo> getUpdatedEvents(@RequestBody GetUpdatedEventsRequest updatedEventsRequest, HttpServletRequest request) throws ParseException {
         return service.getUpdatedEvent(updatedEventsRequest, ((User) request.getAttribute("user")).getId());
     }
 
+
+
+
     @RequestMapping(method = RequestMethod.POST, value = "/delete")
     public GenericResponse getUpdatedEvents(@RequestBody DeleteEventRequest deleteEventRequest, HttpServletRequest request) throws ParseException, NoSuchEventPerUserException {
         User user= (User) request.getAttribute("user");
-
         service.deleteEvent(Integer.valueOf(deleteEventRequest.getId()), user);
         return new GenericResponse(Messages.MESSAGE_DELETE_EVENT_SUCCESS, new String[]{});
+    }
+
+
+    @RequestMapping(method = RequestMethod.POST, value = "/add_gps")
+    public GenericResponse addGps(@RequestBody AddGPSRequest gpsRequest, HttpServletRequest request){
+        User user= (User) request.getAttribute("user");
+        service.createGPS(gpsRequest,user);
+
+        return new GenericResponse(Messages.MESSAGE_ADD_GPS_SUCCESS, new String[]{});
     }
 
 

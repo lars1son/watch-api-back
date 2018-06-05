@@ -1,5 +1,6 @@
 package com.edsson.expopromoter.api.controller;
 
+import com.edsson.expopromoter.api.context.Messages;
 import com.edsson.expopromoter.api.context.UserContext;
 import com.edsson.expopromoter.api.exceptions.EntityAlreadyExistException;
 import com.edsson.expopromoter.api.exceptions.EventBadCredentialsException;
@@ -12,6 +13,7 @@ import com.edsson.expopromoter.api.model.json.JsonUrl;
 import com.edsson.expopromoter.api.model.json.JsonUser;
 import com.edsson.expopromoter.api.operator.ImageOperator;
 import com.edsson.expopromoter.api.request.CreateEventRequest;
+import com.edsson.expopromoter.api.request.MergeRequest;
 import com.edsson.expopromoter.api.request.UpdatePasswordRequest;
 import com.edsson.expopromoter.api.request.UserUpdateRequest;
 import com.edsson.expopromoter.api.service.EventService;
@@ -191,6 +193,7 @@ public class UserController {
         userService.update(userUpdateRequest, (User) request.getAttribute("user"));
         return new GenericResponse("User update success", new String[]{});
     }
+
 
 //
 //    @RequestMapping(

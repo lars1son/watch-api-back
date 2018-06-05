@@ -8,9 +8,12 @@ public class ResetPasswordRequest {
 
 
     String email;
-
+    String client;
     public String getEmail() {
         return email;
     }
 
+    public String getClient() {
+        return client;
+    }
 }

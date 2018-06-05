@@ -18,12 +18,12 @@ public class UpdatePasswordRequestValidator implements Validator {
 
 
     private Pattern emailPattern;
-    private Pattern passwordPattern;
+//    private Pattern passwordPattern;
 
     @Autowired
     public UpdatePasswordRequestValidator() {
         emailPattern = Pattern.compile(EMAIL_PATTERN);
-        passwordPattern = Pattern.compile(PASSWORD_PATTERN);
+//        passwordPattern = Pattern.compile(PASSWORD_PATTERN);
     }
 
     @Override
@@ -44,10 +44,10 @@ public class UpdatePasswordRequestValidator implements Validator {
             if (password.length() < MIN_PASSWORD_SIZE || password.length() > MAX_PASSWORD_SIZE) {
                 errors.rejectValue("newPassword", "Size.userForm.password");
             }
-            Matcher matcher = passwordPattern.matcher(password);
-            if (!matcher.matches()){
-                errors.rejectValue("newPassword", "Pattern.userForm.password");
-            }
+//            Matcher matcher = passwordPattern.matcher(password);
+//            if (!matcher.matches()){
+//                errors.rejectValue("newPassword", "Pattern.userForm.password");
+//            }
         }
     }
 }

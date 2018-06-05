@@ -8,7 +8,8 @@ public class CreateEventRequest {
 
 
     private int id;
-    private String imageBase64;
+    private String coverImageBase64;
+    private String infoImageBase64;
     private String dateStart;
     private String name;
     private String dateEnd;
@@ -29,12 +30,12 @@ public class CreateEventRequest {
         this.ticketUrl = ticketUrl;
     }
 
-    public String getImageBase64() {
-        return imageBase64;
+    public String getCoverImageBase64() {
+        return coverImageBase64;
     }
 
-    public void setImageBase64(String imageBase64) {
-        this.imageBase64 = imageBase64;
+    public void setCoverImageBase64(String coverImageBase64) {
+        this.coverImageBase64 = coverImageBase64;
     }
 
     public String getDateStart() {
@@ -78,7 +79,16 @@ public class CreateEventRequest {
 
 
     }
-//    public int getEventId() {
+
+    public String getInfoImageBase64() {
+        return infoImageBase64;
+    }
+
+    public void setInfoImageBase64(String infoImageBase64) {
+        this.infoImageBase64 = infoImageBase64;
+    }
+
+    //    public int getEventId() {
 //        return eventId;
 //    }
 //

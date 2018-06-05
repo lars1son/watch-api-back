@@ -8,7 +8,7 @@ public class SystemConfigurationKeys {
         public final static String PATH = "default_event_image_path";
     }
 
-    public static final class DefaultEventURL{
+    public static final class EventInfoURL{
         public final static String URL = "default_event_url";
     }
 
@@ -24,7 +24,7 @@ public class SystemConfigurationKeys {
     }
     public static final String[] SYSTEM_CONFIGURATION_KEYS = {
             DefaultImagePath.PATH
-            , DefaultEventURL.URL
+            , EventInfoURL.URL
             , DefaultUserTicketImagePath.PATH
             , Password.RESET_LINK_TIMEOUT
     };

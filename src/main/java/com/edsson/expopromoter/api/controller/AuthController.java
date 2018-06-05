@@ -65,11 +65,7 @@ public class AuthController {
 
 
     @CrossOrigin
-    @RequestMapping(
-            value = "/registration",
-            method = RequestMethod.POST,
-            produces = APPLICATION_JSON_VALUE,
-            consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE}
+    @RequestMapping(value = "/registration", method = RequestMethod.POST, produces = APPLICATION_JSON_VALUE, consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE}
     )
     public JsonUser registration(@RequestBody RegistrationRequest registrationRequest,
                                  BindingResult bindingResult,
@@ -103,10 +99,7 @@ public class AuthController {
     }
 
     @CrossOrigin
-    @RequestMapping(
-            value = "/login",
-            method = POST,
-            produces = APPLICATION_JSON_VALUE,
+    @RequestMapping(value = "/login", method = POST, produces = APPLICATION_JSON_VALUE,
             consumes = {APPLICATION_JSON_VALUE}
     )
     public JsonUser login(@RequestBody LoginRequest loginRequest,
@@ -126,11 +119,7 @@ public class AuthController {
     }
 
     @CrossOrigin
-    @RequestMapping(
-            value = "/device_register",
-            method = POST,
-            produces = APPLICATION_JSON_VALUE,
-            consumes = {APPLICATION_JSON_VALUE}
+    @RequestMapping(value = "/device_register", method = POST, produces = APPLICATION_JSON_VALUE, consumes = {APPLICATION_JSON_VALUE}
     )
     public JsonUser registerDevice(@RequestBody RegisterDeviceRequest registerDeviceRequest,
                                    BindingResult bindingResult,
@@ -143,11 +132,7 @@ public class AuthController {
     }
 
     @CrossOrigin
-    @RequestMapping(
-            value = "/device_login",
-            method = POST,
-            produces = APPLICATION_JSON_VALUE,
-            consumes = {APPLICATION_JSON_VALUE}
+    @RequestMapping(value = "/device_login", method = POST, produces = APPLICATION_JSON_VALUE, consumes = {APPLICATION_JSON_VALUE}
     )
     public JsonUser loginDevice(@RequestBody RegisterDeviceRequest registerDeviceRequest,
                                 BindingResult bindingResult,
@@ -163,25 +148,17 @@ public class AuthController {
     }
 
 
-    @RequestMapping(
-            value = "/reset_password",
-            method = POST,
-            produces = APPLICATION_JSON_VALUE,
-            consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE}
+    @RequestMapping(value = "/reset_password", method = POST, produces = APPLICATION_JSON_VALUE, consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE}
     )
     public GenericResponse resetPassword(@RequestBody ResetPasswordRequest credentials, BindingResult bindingResult) throws Exception {
         String token = sendUpdateMessage(credentials, bindingResult);
 
 
-        mailSender.operateMessage(credentials.getEmail(), token, true);
+        mailSender.operateMessage(credentials.getEmail(), credentials.getClient(), token, true);
         return new GenericResponse(Messages.MESSAGE_PASSWORD_RESET_SUCCESS, new String[]{credentials.getEmail()});
     }
 
-    @RequestMapping(
-            value = "/update_password",
-            method = POST,
-            produces = APPLICATION_JSON_VALUE,
-            consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE}
+    @RequestMapping(value = "/update_password", method = POST, produces = APPLICATION_JSON_VALUE, consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE}
     )
     public GenericResponse updatePassword(@RequestBody UpdatePasswordRequest updatePasswordRequest,
                                           BindingResult bindingResult) throws Exception {
@@ -205,7 +182,7 @@ public class AuthController {
                                       BindingResult bindingResult) throws Exception {
 
         String token = sendUpdateMessage(credentials, bindingResult);
-        mailSender.operateMessage(credentials.getEmail(), token, false);
+        mailSender.operateMessage(credentials.getEmail(), credentials.getClient(), token, false);
         return new GenericResponse(Messages.MESSAGE_EMAIL_RESET_SUCCESS, new String[]{credentials.getEmail()});
     }
 
@@ -223,7 +200,7 @@ public class AuthController {
         if (user == null) {
             throw new NoSuchUserException("No user for this reset password token exists");
         }
-        userService.updateUserEmail(user,updateEmailRequest.getNewEmail(),updateEmailRequest.getUpdateEmailToken());
+        userService.updateUserEmail(user, updateEmailRequest.getNewEmail(), updateEmailRequest.getUpdateEmailToken());
         logger.info("Password updated for user: " + user.getUserId());
         return new GenericResponse(Messages.MESSAGE_PASSWORD_UPDATE_SUCCESS, new String[]{user.getEmail()});
     }
@@ -244,5 +221,19 @@ public class AuthController {
 
         logger.info("START MAILSERVICE");
         return token;
+    }
+
+    @RequestMapping(method = POST, value = "/merge")
+    public GenericResponse merge(@RequestBody MergeRequest mergeRequest, HttpServletRequest request, BindingResult bindingResult) throws RequestValidationException, EntityAlreadyExistException {
+
+        User device = (User) request.getAttribute("user");
+        RegistrationRequest registrationRequest = new RegistrationRequest(mergeRequest.getEmail(), mergeRequest.getPassword());
+        userRegistrationRequestValidator.validate(registrationRequest, bindingResult);
+        if (bindingResult.hasErrors()) {
+            throw new RequestValidationException(bindingResult);
+        }
+        userService.merge(device,mergeRequest);
+
+        return new GenericResponse(Messages.MESSAGE_MERGE_REQUEST, new String[]{});
     }
 }
