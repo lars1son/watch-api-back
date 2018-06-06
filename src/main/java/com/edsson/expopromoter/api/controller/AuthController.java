@@ -143,11 +143,11 @@ public class AuthController {
     )
     public GenericResponse forgotPassword(@RequestBody ResetPasswordRequest credentials, BindingResult bindingResult, HttpServletRequest request) throws Exception {
 
-        User user = (User) request.getAttribute("user");
-        String token = sendUpdateMessage(credentials, user.getEmail(), bindingResult);
 
-        mailSender.operateMessage(user.getEmail(), credentials.getClient(), token, true);
-        return new GenericResponse(Messages.MESSAGE_PASSWORD_RESET_SUCCESS, new String[]{user.getEmail()});
+        String token = sendUpdateMessage(credentials, credentials.getEmail(), bindingResult);
+
+        mailSender.operateMessage(credentials.getEmail(), credentials.getClient(), token, true);
+        return new GenericResponse(Messages.MESSAGE_PASSWORD_RESET_SUCCESS, new String[]{credentials.getEmail()});
     }
 
     @RequestMapping(value = "/reset_password", method = POST, produces = APPLICATION_JSON_VALUE, consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE}

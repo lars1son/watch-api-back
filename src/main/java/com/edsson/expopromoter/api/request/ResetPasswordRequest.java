@@ -7,11 +7,15 @@ import javax.validation.constraints.NotNull;
 public class ResetPasswordRequest {
 
 
-//    String email;
+    String email;
     String client;
 //    public String getEmail() {
 //        return email;
 //    }
+
+    public String getEmail() {
+        return email;
+    }
 
     public String getClient() {
         return client;
