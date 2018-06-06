@@ -53,17 +53,15 @@ public class MailSender {
         String url;
         String subject;
         String deviceUrl;
-
-
         if (pas) {
-            if (client != "mobile") {
+            if (!client.toLowerCase().equals("mobile")) {
                 url = websiteUrlPassword + token;
             } else {
                 url = mobileUrlPassword + token;
             }
             subject = subjectPasswordReset;
         } else {
-            if (client != "mobile") {
+            if (!client.toLowerCase().equals("mobile")) {
                 url = websiteUrlEmail + token;
             } else {
                 url = mobileUrlEmail + token;
@@ -87,7 +85,7 @@ public class MailSender {
             this.javaMailSender.send(preparator);
             logger.info(String.format("Mail successfully sent. Mail to send in queue: %d", queue.size()));
         } catch (Exception ex) {
-            logger.warn("Exception sending mail");
+            logger.warn("Exception sending mail "+ ex);
         }
     }
 

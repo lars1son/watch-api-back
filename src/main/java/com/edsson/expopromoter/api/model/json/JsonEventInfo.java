@@ -3,12 +3,13 @@ package com.edsson.expopromoter.api.model.json;
 import com.edsson.expopromoter.api.model.EventDAO;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class JsonEventInfo {
-
+    private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private int id;
     private String name;
     private String ticketUrl;
@@ -29,8 +30,8 @@ public class JsonEventInfo {
         this.id = id;
         this.name = name;
         this.ticketUrl = ticketUrl;
-        this.dateStart = String.valueOf(dateStart);
-        this.dateEnd = String.valueOf(dateEnd);
+        this.dateStart = formatter.format(dateStart);
+        this.dateEnd = formatter.format(dateEnd);
         this.photo = photoPath;
         this.eventWebsite = eventWebsite;
         this.eventLocation = eventLocation;
@@ -41,6 +42,7 @@ public class JsonEventInfo {
     }
 
     public static JsonEventInfo from(EventDAO eventDAO) {
+
         return new JsonEventInfo(
                eventDAO.getId(),
                eventDAO.getName(),

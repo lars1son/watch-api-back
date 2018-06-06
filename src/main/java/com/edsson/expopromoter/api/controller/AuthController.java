@@ -118,18 +118,6 @@ public class AuthController {
         return JsonUser.from(userContext);
     }
 
-    @CrossOrigin
-    @RequestMapping(value = "/device_register", method = POST, produces = APPLICATION_JSON_VALUE, consumes = {APPLICATION_JSON_VALUE}
-    )
-    public JsonUser registerDevice(@RequestBody RegisterDeviceRequest registerDeviceRequest,
-                                   BindingResult bindingResult,
-                                   HttpServletResponse response,
-                                   HttpServletRequest request) throws FailedToRegisterException, EntityAlreadyExistException {
-
-
-        userService.create(registerDeviceRequest);
-        return toKenForUser(registerDeviceRequest.getDeviceId(), response);
-    }
 
     @CrossOrigin
     @RequestMapping(value = "/device_login", method = POST, produces = APPLICATION_JSON_VALUE, consumes = {APPLICATION_JSON_VALUE}
@@ -137,25 +125,40 @@ public class AuthController {
     public JsonUser loginDevice(@RequestBody RegisterDeviceRequest registerDeviceRequest,
                                 BindingResult bindingResult,
                                 HttpServletResponse response,
-                                HttpServletRequest request) throws NotFoundException {
+                                HttpServletRequest request) throws NotFoundException, EntityAlreadyExistException, FailedToRegisterException {
         User user = userService.findOneByEmail(registerDeviceRequest.getDeviceId());
         if (user != null) {
             UserContext userContext = UserContext.create(user);
             String token = jwtService.tokenFor(userContext);
             response.setHeader("Token", token);
             return JsonUser.from(userContext);
-        } else throw new NotFoundException("Device " + registerDeviceRequest.getDeviceId() + "not exist in Database!");
+        } else {
+            userService.create(registerDeviceRequest);
+            return toKenForUser(registerDeviceRequest.getDeviceId(), response);
+        }
     }
 
 
+    @RequestMapping(value = "/forgot_password", method = POST, produces = APPLICATION_JSON_VALUE, consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE}
+    )
+    public GenericResponse forgotPassword(@RequestBody ResetPasswordRequest credentials, BindingResult bindingResult, HttpServletRequest request) throws Exception {
+
+        User user = (User) request.getAttribute("user");
+        String token = sendUpdateMessage(credentials, user.getEmail(), bindingResult);
+
+        mailSender.operateMessage(user.getEmail(), credentials.getClient(), token, true);
+        return new GenericResponse(Messages.MESSAGE_PASSWORD_RESET_SUCCESS, new String[]{user.getEmail()});
+    }
+
     @RequestMapping(value = "/reset_password", method = POST, produces = APPLICATION_JSON_VALUE, consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE}
     )
-    public GenericResponse resetPassword(@RequestBody ResetPasswordRequest credentials, BindingResult bindingResult) throws Exception {
-        String token = sendUpdateMessage(credentials, bindingResult);
+    public GenericResponse resetPassword(@RequestBody ResetPasswordRequest credentials, BindingResult bindingResult, HttpServletRequest request) throws Exception {
 
+        User user = (User) request.getAttribute("user");
+        String token = sendUpdateMessage(credentials, user.getEmail(), bindingResult);
 
-        mailSender.operateMessage(credentials.getEmail(), credentials.getClient(), token, true);
-        return new GenericResponse(Messages.MESSAGE_PASSWORD_RESET_SUCCESS, new String[]{credentials.getEmail()});
+        mailSender.operateMessage(user.getEmail(), credentials.getClient(), token, true);
+        return new GenericResponse(Messages.MESSAGE_PASSWORD_RESET_SUCCESS, new String[]{user.getEmail()});
     }
 
     @RequestMapping(value = "/update_password", method = POST, produces = APPLICATION_JSON_VALUE, consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE}
@@ -179,11 +182,11 @@ public class AuthController {
 
     @RequestMapping(value = "/reset_email", method = POST, produces = APPLICATION_JSON_VALUE, consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE})
     public GenericResponse resetEmail(@RequestBody ResetPasswordRequest credentials,
-                                      BindingResult bindingResult) throws Exception {
-
-        String token = sendUpdateMessage(credentials, bindingResult);
-        mailSender.operateMessage(credentials.getEmail(), credentials.getClient(), token, false);
-        return new GenericResponse(Messages.MESSAGE_EMAIL_RESET_SUCCESS, new String[]{credentials.getEmail()});
+                                      BindingResult bindingResult, HttpServletRequest request) throws Exception {
+        User user = (User) request.getAttribute("user");
+        String token = sendUpdateMessage(credentials, user.getEmail(), bindingResult);
+        mailSender.operateMessage(user.getEmail(), credentials.getClient(), token, false);
+        return new GenericResponse(Messages.MESSAGE_EMAIL_RESET_SUCCESS, new String[]{user.getEmail()});
     }
 
 
@@ -206,16 +209,16 @@ public class AuthController {
     }
 
 
-    private String sendUpdateMessage(ResetPasswordRequest credentials, BindingResult bindingResult) throws RequestValidationException, NoSuchUserException, FailedToCreateResetPasswordTokenException {
-        resetPasswordValidator.validate(credentials, bindingResult);
-        if (bindingResult.hasErrors()) {
+    private String sendUpdateMessage(ResetPasswordRequest credentials, String email, BindingResult bindingResult) throws RequestValidationException, NoSuchUserException, FailedToCreateResetPasswordTokenException {
+//        resetPasswordValidator.validate(credentials, bindingResult);
+//        if (bindingResult.hasErrors()) {
+        if (email == null) {
             throw new RequestValidationException(bindingResult);
         }
 
-        String userEmail = credentials.getEmail();
-        User user = userService.findOneByEmail(userEmail);
+        User user = userService.findOneByEmail(email);
         if (user == null) {
-            throw new NoSuchUserException(userEmail);
+            throw new NoSuchUserException(email);
         }
         String token = userService.createPasswordResetTokenForUser(user);
 
@@ -232,7 +235,7 @@ public class AuthController {
         if (bindingResult.hasErrors()) {
             throw new RequestValidationException(bindingResult);
         }
-        userService.merge(device,mergeRequest);
+        userService.merge(device, mergeRequest);
 
         return new GenericResponse(Messages.MESSAGE_MERGE_REQUEST, new String[]{});
     }

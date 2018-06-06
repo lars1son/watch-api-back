@@ -199,6 +199,7 @@ public class EventService {
 
     public JsonEventInfo buildWithImage(EventDAO eventDAO) throws IOException {
         String photo = eventDAO.getPhotoPath();
+
         JsonEventInfo json = JsonEventInfo.from(eventDAO);
         json.setPhoto(photo);
         return json;
