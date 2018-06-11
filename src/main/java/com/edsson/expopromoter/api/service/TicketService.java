@@ -3,6 +3,7 @@ package com.edsson.expopromoter.api.service;
 
 import com.edsson.expopromoter.api.config.SystemConfigurationKeys;
 import com.edsson.expopromoter.api.exceptions.EntityAlreadyExistException;
+import com.edsson.expopromoter.api.exceptions.FailedToUploadImageToAWSException;
 import com.edsson.expopromoter.api.exceptions.SystemConfigurationException;
 import com.edsson.expopromoter.api.model.EventDAO;
 import com.edsson.expopromoter.api.model.TicketDAO;
@@ -15,6 +16,8 @@ import javax.servlet.http.HttpServletRequest;import org.springframework.beans.fa
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+
+import static org.aspectj.weaver.tools.cache.SimpleCacheFactory.path;
 
 @Service
 public class TicketService {
@@ -41,17 +44,17 @@ public class TicketService {
     }
 
 
-    public int addUserTicketFoEvent(AddTicketRequest addTicketRequest, HttpServletRequest request) throws SystemConfigurationException, IOException, EntityAlreadyExistException {
+    public int addUserTicketFoEvent(AddTicketRequest addTicketRequest, HttpServletRequest request) throws SystemConfigurationException, IOException, EntityAlreadyExistException, FailedToUploadImageToAWSException {
         TicketDAO ticket = new TicketDAO();
         User user = (User) request.getAttribute("user");
         if (!user.getTickets().contains(ticket)) {
 //            String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\user_" + user.getId().intValue();
-            String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultUserTicketImagePath.PATH) + user.getId().intValue();
+            String name = String.valueOf(user.getId().intValue());
 
             EventDAO eventDAO = eventService.findOneById(addTicketRequest.getEventId());
 
             //Local storage
-            imageOperator.saveImage(addTicketRequest.getImageBase64(), path );
+            String path = imageOperator.saveImage(addTicketRequest.getImageBase64(), name );
 
 
             //Amazon Storage

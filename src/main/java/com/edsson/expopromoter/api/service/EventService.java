@@ -2,10 +2,7 @@ package com.edsson.expopromoter.api.service;
 
 
 import com.edsson.expopromoter.api.config.SystemConfigurationKeys;
-import com.edsson.expopromoter.api.exceptions.EntityAlreadyExistException;
-import com.edsson.expopromoter.api.exceptions.EventBadCredentialsException;
-import com.edsson.expopromoter.api.exceptions.NoSuchEventPerUserException;
-import com.edsson.expopromoter.api.exceptions.SystemConfigurationException;
+import com.edsson.expopromoter.api.exceptions.*;
 import com.edsson.expopromoter.api.model.EventDAO;
 import com.edsson.expopromoter.api.model.GpsDAO;
 import com.edsson.expopromoter.api.model.User;
@@ -48,7 +45,7 @@ public class EventService {
         this.repository = eventRepository;
         this.amazonClient = amazonClient;
         this.imageOperator = imageOperator;
-        this.gpsRepository=gpsRepository;
+        this.gpsRepository = gpsRepository;
         this.userService = userService;
         this.systemConfigurationService = systemConfigurationService;
     }
@@ -60,12 +57,8 @@ public class EventService {
     public void save(EventDAO eventDAO) {
         repository.save(eventDAO);
     }
-//
-//    public EventDAO findOneByName(String name) {
-//        return repository.findByName(name);
-//    }
 
-    public JsonUrl createEventDAO(CreateEventRequest createEventRequest, User user) throws IOException, SystemConfigurationException, ParseException, EntityAlreadyExistException, EventBadCredentialsException, NotFoundException {
+    public JsonUrl createEventDAO(CreateEventRequest createEventRequest, User user) throws IOException, SystemConfigurationException, ParseException, EntityAlreadyExistException, EventBadCredentialsException, NotFoundException, FailedToUploadImageToAWSException {
         if (user != null) {
             if (repository.findByName(createEventRequest.getName()) == null) {
 
@@ -87,18 +80,13 @@ public class EventService {
                 eventDAO.setTicketUrl(createEventRequest.getTicketUrl());
                 eventDAO.setUserCreatorId(user);
 
-//               For amazon
-//                if (createEventRequest.getImageBase64() != null) {
-//                    eventDAO.setPhotoPath(amazonClient.uploadFileTos3bucket(createEventRequest.getImageBase64(), eventDAO.getName()));
-
-//                }
 
                 user.addToEventDAOList(eventDAO);
-                userService.save(user);
 
 
                 logger.info(createEventRequest.getCoverImageBase64());
 
+                repository.save(eventDAO);
 
                 logger.info("New event saved! ");
                 eventDAO = repository.findByName(eventDAO.getName());
@@ -106,20 +94,15 @@ public class EventService {
                 eventDAO.setEventInfoUrl(systemConfigurationService.getValueByKey(SystemConfigurationKeys.EventInfoURL.URL) + eventDAO.getId());
 
                 if (createEventRequest.getCoverImageBase64() != null) {
-                    //For local storage
-//                String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\event_" + eventDAO.getId();
-//              AMAZON
-
-                    String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "cover_photo_" + eventDAO.getId();
-                    eventDAO.setPhotoPath(imageOperator.saveImage(createEventRequest.getCoverImageBase64(), path));
+                    String name = "cover_photo_" + eventDAO.getId();
+                    eventDAO.setPhotoPath(imageOperator.saveImage(createEventRequest.getCoverImageBase64(), name));
                 }
                 if (createEventRequest.getInfoImageBase64() != null) {
-                    String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "info_photo_" + eventDAO.getId();
-                    eventDAO.setInfoPhotoPath(imageOperator.saveImage(createEventRequest.getInfoImageBase64(), path));
+                    String name = "info_photo_" + eventDAO.getId();
+                    eventDAO.setInfoPhotoPath(imageOperator.saveImage(createEventRequest.getInfoImageBase64(), name));
                 }
 
-
-                repository.save(eventDAO);
+                userService.save(user);
 
                 return new JsonUrl(eventDAO.getPhotoPath(), eventDAO.getInfoPhotoPath(), eventDAO.getId(), eventDAO.getEventInfoUrl());
             } else {
@@ -133,7 +116,7 @@ public class EventService {
         }
     }
 
-    public JsonUrl update(CreateEventRequest eventDAO, HttpServletRequest request) throws NotFoundException, SystemConfigurationException, IOException, ParseException {
+    public JsonUrl update(CreateEventRequest eventDAO, HttpServletRequest request) throws NotFoundException, SystemConfigurationException, IOException, ParseException, FailedToUploadImageToAWSException {
 
         User user = (User) request.getAttribute("user");
         if (user != null) {
@@ -162,15 +145,13 @@ public class EventService {
                     savedEvent.setContacts(eventDAO.getContacts());
                 }
                 if (eventDAO.getCoverImageBase64() != null) {
-//                    Windows
-//                    String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\event_" + eventDAO.getId();
-//                    Linux
-                    String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "/cover_" + eventDAO.getId();
-                    savedEvent.setPhotoPath(imageOperator.saveImage(eventDAO.getCoverImageBase64(), path));
+
+                    String name = "/cover_" + eventDAO.getId();
+                    savedEvent.setPhotoPath(imageOperator.saveImage(eventDAO.getCoverImageBase64(), name));
                 }
                 if (eventDAO.getInfoImageBase64() != null) {
-                    String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "/event_" + eventDAO.getId();
-                    savedEvent.setPhotoPath(imageOperator.saveImage(eventDAO.getInfoImageBase64(), path));
+                    String name = "/event_" + eventDAO.getId();
+                    savedEvent.setPhotoPath(imageOperator.saveImage(eventDAO.getInfoImageBase64(), name));
 
                 }
                 if (eventDAO.getDateEnd() != null) {
@@ -182,9 +163,9 @@ public class EventService {
                 if (eventDAO.getName() != null) {
                     savedEvent.setName(eventDAO.getName());
                 }
-
-                user.addToEventDAOList(savedEvent);
-                userService.save(user);
+                save(savedEvent);
+//                user.addToEventDAOList(savedEvent);
+//                userService.save(user);
                 return new JsonUrl(savedEvent.getPhotoPath(), savedEvent.getInfoPhotoPath(), savedEvent.getId(), savedEvent.getEventInfoUrl());
             } else
                 throw new NotFoundException("User " + user.getEmail() + " does not have event: '" + savedEvent.getName() + "'!");
@@ -235,7 +216,8 @@ public class EventService {
     public void createGPS(AddGPSRequest gpsRequest, User user) {
         GpsDAO gps = new GpsDAO();
 
-        gps.setCoordinates(gpsRequest.getCoordinates());
+        gps.setLatitude(gpsRequest.getLatitude());
+        gps.setLongtitude(gpsRequest.getLongtitude());
         gps.setEventDAO(repository.findById(Integer.valueOf(gpsRequest.getEventId())));
         gps.setUser(userService.findOneById(user.getId()));
 

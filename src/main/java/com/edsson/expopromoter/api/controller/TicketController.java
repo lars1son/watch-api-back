@@ -2,6 +2,7 @@ package com.edsson.expopromoter.api.controller;
 
 
 import com.edsson.expopromoter.api.exceptions.EntityAlreadyExistException;
+import com.edsson.expopromoter.api.exceptions.FailedToUploadImageToAWSException;
 import com.edsson.expopromoter.api.exceptions.SystemConfigurationException;
 import com.edsson.expopromoter.api.model.json.JsonTicket;
 import com.edsson.expopromoter.api.request.AddTicketRequest;
@@ -43,7 +44,7 @@ public class TicketController {
 //        return new ResponseEntity<List<Ticket>>(tickets, HttpStatus.OK);
 //    }
     @RequestMapping(method = RequestMethod.POST, path = "/add")
-    public JsonTicket addTicket(@RequestBody AddTicketRequest addTicketRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, SystemConfigurationException, EntityAlreadyExistException {
+    public JsonTicket addTicket(@RequestBody AddTicketRequest addTicketRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, SystemConfigurationException, EntityAlreadyExistException, FailedToUploadImageToAWSException {
         return new JsonTicket(ticketService.addUserTicketFoEvent(addTicketRequest, request));
     }
 

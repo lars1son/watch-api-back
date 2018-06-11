@@ -2,10 +2,7 @@ package com.edsson.expopromoter.api.controller;
 
 import com.edsson.expopromoter.api.context.Messages;
 import com.edsson.expopromoter.api.context.UserContext;
-import com.edsson.expopromoter.api.exceptions.EntityAlreadyExistException;
-import com.edsson.expopromoter.api.exceptions.EventBadCredentialsException;
-import com.edsson.expopromoter.api.exceptions.RequestValidationException;
-import com.edsson.expopromoter.api.exceptions.SystemConfigurationException;
+import com.edsson.expopromoter.api.exceptions.*;
 import com.edsson.expopromoter.api.model.User;
 import com.edsson.expopromoter.api.model.json.GenericResponse;
 import com.edsson.expopromoter.api.model.json.JsonTicket;
@@ -165,7 +162,7 @@ public class UserController {
     @RequestMapping(method = RequestMethod.POST,
             consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE},
             value = "/create_event")
-    public JsonUrl createTicket(@RequestBody CreateEventRequest createEventRequest, HttpResponse response,HttpServletRequest request) throws EntityAlreadyExistException, EventBadCredentialsException, ParseException, FileNotFoundException, SystemConfigurationException, IOException, NotFoundException {
+    public JsonUrl createTicket(@RequestBody CreateEventRequest createEventRequest, HttpResponse response,HttpServletRequest request) throws EntityAlreadyExistException, EventBadCredentialsException, ParseException, FileNotFoundException, SystemConfigurationException, IOException, NotFoundException, FailedToUploadImageToAWSException {
 
         log.info("/Create_event request");
         return service.createEventDAO(createEventRequest, (User) request.getAttribute("user"));
@@ -175,7 +172,7 @@ public class UserController {
     @RequestMapping(method = RequestMethod.POST,
             consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE},
             value = "/update_event")
-    public JsonUrl updateEvent(@RequestBody CreateEventRequest createEventRequest,HttpServletRequest request, HttpResponse response) throws ParseException, EventBadCredentialsException, NotFoundException, IOException, SystemConfigurationException {
+    public JsonUrl updateEvent(@RequestBody CreateEventRequest createEventRequest,HttpServletRequest request, HttpResponse response) throws ParseException, EventBadCredentialsException, NotFoundException, IOException, SystemConfigurationException, FailedToUploadImageToAWSException {
 //        response.setHeader("Token", (String) request.getAttribute("Token"));
         return service.update(createEventRequest,request);
 
