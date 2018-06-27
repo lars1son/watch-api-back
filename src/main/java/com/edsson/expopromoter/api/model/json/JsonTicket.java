@@ -1,12 +1,13 @@
 package com.edsson.expopromoter.api.model.json;
 
+import com.edsson.expopromoter.api.model.TicketDAO;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class JsonTicket {
     private int id;
     private String eventName;
-    private String ticketImageBase64;
+    private String ticketImagePath;
 
 
     public JsonTicket() {
@@ -16,10 +17,17 @@ public class JsonTicket {
         this.id = id;
     }
 
-    public JsonTicket(int id, String eventName, String ticketImageBase64) {
+    public JsonTicket(int id, String eventName, String ticketImagePath) {
         this.id = id;
         this.eventName = eventName;
-        this.ticketImageBase64 = ticketImageBase64;
+        this.ticketImagePath = ticketImagePath;
+    }
+    public static JsonTicket from(TicketDAO ticketDAO){
+        return new JsonTicket(
+                ticketDAO.getId(),
+                ticketDAO.getEventsByEventId().getName(),
+                ticketDAO.getImagePath()
+        );
     }
 
     public int getId() {

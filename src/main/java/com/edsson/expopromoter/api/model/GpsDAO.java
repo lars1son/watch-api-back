@@ -4,7 +4,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "gps")
-public class GpsDAO {
+public class GpsDAO extends BaseModel {
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO)

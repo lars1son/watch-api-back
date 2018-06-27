@@ -5,11 +5,13 @@ public class Messages {
     public static final String MESSAGE_PASSWORD_RESET_SUCCESS = "login.password_reset.success";
     public static final String MESSAGE_PASSWORD_UPDATE_SUCCESS = "login.password_update.success";
     public static final String MESSAGE_EMAIL_RESET_SUCCESS = "login.email_reset.success";
-    public static final String MESSAGE_DELETE_EVENT_SUCCESS = "event.delete.success";
+    public static final String MESSAGE_DELETE_EVENT_SUCCESS = "Deleted successfully.";
+    public static final String MESSAGE_DELETE_TICKET_SUCCESS = "ticket.delete.success";
+    public static final String MESSAGE_DELETE_EVENT_FAILED = "Event can't be deleted. User does not contain event with such id.";
     public static final String MESSAGE_ADD_GPS_SUCCESS = "GPS loaded successfully!";
     public static final String MESSAGE_ADMIN_LOGIN_SUCCESS = "You are logged in as Administrator";
     public static final String MESSAGE_EVENT_DELETE_BY_ADMINISTRATOR="Administrator deleted event";
-    public static final String MESSAGE_MERGE_REQUEST = "Users merge request";
+    public static final String MESSAGE_MERGE_REQUEST = "Users merge request success!";
 
     public static final String MESSAGE_REGISTRATION_USER_ALREADY_EXIST = "registration.failure.user_already_exist";
 

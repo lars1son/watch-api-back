@@ -33,15 +33,6 @@ public class JsonUser {
         this.contactEmail=contactEmail;
         this.listEventID=list;
     }
-
-//    public JsonUser(String email, long id, String role, String password, String fullName) {
-//        this.email = email;
-//        this.id = id;
-//        this.role = role;
-//        this.password = password;
-//        this.fullName = fullName;
-//    }
-
     public static JsonUser from(UserContext userContext) {
         return new JsonUser(
                 userContext.getEmail(),
@@ -52,13 +43,7 @@ public class JsonUser {
                 userContext.getListEvent()
         );
     }
-//    public static JsonUser fullInfoFrom(UserContext userContext) {
-//        return new JsonUser(
-//                userContext.getEmail(),
-//                userContext.getUserId(),
-//                userContext.getRole().getRole()
-//        );
-//    }
+
 
 
 

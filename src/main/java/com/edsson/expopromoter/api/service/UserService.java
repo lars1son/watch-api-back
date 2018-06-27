@@ -3,20 +3,21 @@ package com.edsson.expopromoter.api.service;
 import com.edsson.expopromoter.api.config.RolesConfiguration;
 import com.edsson.expopromoter.api.config.SystemConfigurationKeys;
 import com.edsson.expopromoter.api.context.UserContext;
-import com.edsson.expopromoter.api.exceptions.EntityAlreadyExistException;
-import com.edsson.expopromoter.api.exceptions.FailedToCreateResetPasswordTokenException;
-import com.edsson.expopromoter.api.exceptions.FailedToUpdateUserException;
-import com.edsson.expopromoter.api.exceptions.SystemConfigurationException;
+import com.edsson.expopromoter.api.exceptions.*;
+import com.edsson.expopromoter.api.model.EventDAO;
 import com.edsson.expopromoter.api.model.PasswordResetTokenDAO;
 import com.edsson.expopromoter.api.model.RoleDAO;
-import com.edsson.expopromoter.api.model.TicketDAO;
 import com.edsson.expopromoter.api.model.User;
 import com.edsson.expopromoter.api.model.json.JsonTicket;
 import com.edsson.expopromoter.api.operator.ImageOperator;
 import com.edsson.expopromoter.api.operator.MailSender;
+import com.edsson.expopromoter.api.repository.EventRepository;
 import com.edsson.expopromoter.api.repository.PasswordTokenRepository;
 import com.edsson.expopromoter.api.repository.UserRepository;
-import com.edsson.expopromoter.api.request.*;
+import com.edsson.expopromoter.api.request.LoginRequest;
+import com.edsson.expopromoter.api.request.MergeRequest;
+import com.edsson.expopromoter.api.request.RegisterDeviceRequest;
+import com.edsson.expopromoter.api.request.UserUpdateRequest;
 import com.edsson.expopromoter.api.service.system_configuration.SystemConfigurationService;
 import com.edsson.expopromoter.api.service.system_configuration.SystemConfigurationServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,15 +28,14 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class UserService {
 
     private final UserRepository repository;
+
+    private final EventRepository eventRepository;
 
     private final RoleService roleService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -43,9 +43,10 @@ public class UserService {
     private final MailSender mailSender;
     private final SystemConfigurationService systemConfigurationService;
     private final PasswordTokenRepository passwordTokenRepository;
-
+//    private final EventService eventService;
     @Autowired
-    public UserService(PasswordTokenRepository passwordTokenRepository, SystemConfigurationServiceImpl systemConfigurationService, MailSender mailSender, UserRepository userRepository, RoleService roleService, BCryptPasswordEncoder bCryptPasswordEncoder, ImageOperator imageOperator) {
+    public UserService(EventRepository eventRepository,
+                       PasswordTokenRepository passwordTokenRepository, SystemConfigurationServiceImpl systemConfigurationService, MailSender mailSender, UserRepository userRepository, RoleService roleService, BCryptPasswordEncoder bCryptPasswordEncoder, ImageOperator imageOperator) {
         this.repository = userRepository;
         this.systemConfigurationService = systemConfigurationService;
         this.roleService = roleService;
@@ -53,6 +54,7 @@ public class UserService {
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.mailSender = mailSender;
         this.passwordTokenRepository = passwordTokenRepository;
+        this.eventRepository=eventRepository;
     }
 
     /**
@@ -72,13 +74,15 @@ public class UserService {
         return null;
     }
 
-    public UserContext getUser(String email) {
+    public UserContext getUser(String email) throws NoSuchUserException {
         User user = repository.findOneByEmail(email);
         if (user != null) {
 
             return UserContext.create(user);
         }
-        return null;
+        else {
+            throw new NoSuchUserException();
+        }
     }
 
     public User findOneByEmail(String email) {
@@ -93,17 +97,17 @@ public class UserService {
         return repository.save(u);
     }
 
-    public void create(RegistrationRequest registrationRequest) throws EntityAlreadyExistException {
+    public void create(String password, String email) throws EntityAlreadyExistException {
         RoleDAO roleDAO = roleService.findRoleDAOByRole(RolesConfiguration.ROLE_USER);
 
         User user = new User();
-        user.setPassword(bCryptPasswordEncoder.encode(registrationRequest.getPassword()));
-        user.setEmail(registrationRequest.getEmail());
+        user.setPassword(bCryptPasswordEncoder.encode(password));
+        user.setEmail(email);
         user.setRole(roleDAO);
 
         if (repository.findOneByEmail(user.getEmail()) == null) {
             repository.save(user);
-        } else throw new EntityAlreadyExistException("User " + user.getEmail() + "already exists");
+        } else throw new EntityAlreadyExistException();
     }
 
     public void create(RegisterDeviceRequest registerDeviceRequest) throws EntityAlreadyExistException {
@@ -113,7 +117,7 @@ public class UserService {
         user.setRole(roleDAO);
         if (repository.findOneByEmail(user.getEmail()) == null) {
             repository.save(user);
-        } else throw new EntityAlreadyExistException("User " + user.getEmail() + "already exists");
+        } else throw new EntityAlreadyExistException();
     }
 
     public void save(User user) {
@@ -121,14 +125,15 @@ public class UserService {
     }
 
 
-    public List<JsonTicket> getAllTickets(HttpServletRequest request) throws IOException {
+    public Set<JsonTicket> getAllTickets(HttpServletRequest request) throws IOException {
         User u = (User) request.getAttribute("user");
         List<JsonTicket> tickets = new ArrayList<>();
 
-        for (TicketDAO ticketDAO : u.getTickets()) {
-            tickets.add(new JsonTicket(ticketDAO.getId(), ticketDAO.getEventsByEventId().getName(), imageOperator.encodeFileToBase64Binary(ticketDAO.getImagePath())));
-        }
-        return tickets;
+//        for (TicketDAO ticketDAO : u.getTicketList()) {
+//            tickets.add(new JsonTicket(ticketDAO.getId(), ticketDAO.getEventsByEventId().getName(), imageOperator.encodeFileToBase64Binary(ticketDAO.getImagePath())));
+//        }
+//        return tickets;
+        return u.getTickets();
     }
 
     public void update(UserUpdateRequest request, User user) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, InstantiationException {
@@ -223,14 +228,22 @@ public class UserService {
     }
 
     public void merge(User user, MergeRequest mergeRequest) throws EntityAlreadyExistException {
-        RoleDAO roleDAO = roleService.findRoleDAOByRole(RolesConfiguration.ROLE_USER);
 
-        user.setEmail(mergeRequest.getEmail());
-        user.setPassword(bCryptPasswordEncoder.encode(mergeRequest.getPassword()));
-        user.setRole(roleDAO);
-        if (repository.findOneByEmail(user.getEmail()) == null) {
-            repository.save(user);
-        } else throw new EntityAlreadyExistException("User " + user.getEmail() + "already exists");
+        create(mergeRequest.getPassword(), mergeRequest.getEmail());
+
+        User newUser = repository.findOneByEmail(mergeRequest.getEmail());
+
+//        Set<EventDAO> eventDAOlist = user.getEventDAOList();
+//        newUser.setEventDAOList();
+//        user.setEventDAOList(null);
+//        repository.save(user);
+//        repository.save(newUser);
+//
+        for (EventDAO eventDAO : user.getEventDAOList()) {
+            eventDAO.setUserCreatorId(newUser);
+            eventRepository.save(eventDAO);
+        }
+
 
     }
 }

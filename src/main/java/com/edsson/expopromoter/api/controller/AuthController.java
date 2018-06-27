@@ -6,16 +6,19 @@ import com.edsson.expopromoter.api.core.service.JwtUtil;
 import com.edsson.expopromoter.api.exceptions.*;
 import com.edsson.expopromoter.api.model.User;
 import com.edsson.expopromoter.api.model.json.GenericResponse;
+import com.edsson.expopromoter.api.model.json.JsonToken;
 import com.edsson.expopromoter.api.model.json.JsonUser;
 import com.edsson.expopromoter.api.operator.MailSender;
 import com.edsson.expopromoter.api.request.*;
 import com.edsson.expopromoter.api.service.LoginService;
 import com.edsson.expopromoter.api.service.RoleService;
+import com.edsson.expopromoter.api.service.TokenService;
 import com.edsson.expopromoter.api.service.UserService;
 import com.edsson.expopromoter.api.validator.*;
 import io.jsonwebtoken.JwtException;
 import io.swagger.annotations.Api;
 import javassist.NotFoundException;
+import org.apache.http.HttpResponse;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -26,9 +29,12 @@ import org.springframework.web.context.WebApplicationContext;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URISyntaxException;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @RestController
@@ -48,9 +54,11 @@ public class AuthController {
     private final MailSender mailSender;
     private final UpdatePasswordRequestValidator updatePasswordRequestValidator;
     private final UpdateEmailRequestValidator updateEmailRequestValidator;
+    private final TokenService tokenService;
+    private final JwtUtil jwtUtil;
 
     @Autowired
-    public AuthController(UpdateEmailRequestValidator updateEmailRequestValidator, UpdatePasswordRequestValidator updatePasswordRequestValidator, MailSender mailSender, ResetPasswordValidator resetPasswordValidator, LoginService loginService, LoginRequestValidator loginRequestValidator, UserRegistrationRequestValidator userRegistrationRequestValidator, UserService userService, RoleService roleService, JwtUtil jwtService) {
+    public AuthController(JwtUtil jwtUtil, TokenService tokenService, UpdateEmailRequestValidator updateEmailRequestValidator, UpdatePasswordRequestValidator updatePasswordRequestValidator, MailSender mailSender, ResetPasswordValidator resetPasswordValidator, LoginService loginService, LoginRequestValidator loginRequestValidator, UserRegistrationRequestValidator userRegistrationRequestValidator, UserService userService, RoleService roleService, JwtUtil jwtService) {
         this.userRegistrationRequestValidator = userRegistrationRequestValidator;
         this.loginService = loginService;
         this.userService = userService;
@@ -61,6 +69,8 @@ public class AuthController {
         this.mailSender = mailSender;
         this.updatePasswordRequestValidator = updatePasswordRequestValidator;
         this.updateEmailRequestValidator = updateEmailRequestValidator;
+        this.tokenService = tokenService;
+        this.jwtUtil = jwtUtil;
     }
 
 
@@ -69,7 +79,7 @@ public class AuthController {
     )
     public JsonUser registration(@RequestBody RegistrationRequest registrationRequest,
                                  BindingResult bindingResult,
-                                 HttpServletResponse response) throws FailedToRegisterException, RequestValidationException, EntityAlreadyExistException {
+                                 HttpServletResponse response) throws FailedToRegisterException, RequestValidationException, EntityAlreadyExistException, FailedToLoginException, NoSuchUserException {
         logger.info("Call controller method: /registration ");
         userRegistrationRequestValidator.validate(registrationRequest, bindingResult);
         if (bindingResult.hasErrors()) {
@@ -78,12 +88,12 @@ public class AuthController {
         // Create user
 
 
-        userService.create(registrationRequest);
+        userService.create(registrationRequest.getPassword(), registrationRequest.getEmail());
 
         return toKenForUser(registrationRequest.getEmail(), response);
     }
 
-    public JsonUser toKenForUser(String name, HttpServletResponse response) throws FailedToRegisterException {
+    public JsonUser toKenForUser(String name, HttpServletResponse response) throws FailedToLoginException, NoSuchUserException {
         UserContext context = userService.getUser(name);
         if (context != null) {
             try {
@@ -91,12 +101,25 @@ public class AuthController {
             } catch (JwtException e) {
                 e.printStackTrace();
             }
-//            logger.info("Successfully registered user with login: " + context.getLogin());
+            logger.info("Successfully registered user with login: " + context.getEmail());
             return JsonUser.from(context);
         } else {
-            throw new FailedToRegisterException("UserDAO not created.");
+            logger.error("Failed to login with name: " + name);
+            throw new FailedToLoginException(name);
         }
     }
+
+
+    @CrossOrigin
+    @RequestMapping(value = "/user_info", method = GET, produces = APPLICATION_JSON_VALUE,
+            consumes = {APPLICATION_JSON_VALUE}
+    )
+    public JsonUser userInfo(HttpServletResponse response, HttpServletRequest request) {
+
+        User user = (User) request.getAttribute("user");
+        return JsonUser.from(UserContext.create(user));
+    }
+
 
     @CrossOrigin
     @RequestMapping(value = "/login", method = POST, produces = APPLICATION_JSON_VALUE,
@@ -104,8 +127,9 @@ public class AuthController {
     )
     public JsonUser login(@RequestBody LoginRequest loginRequest,
                           BindingResult bindingResult,
-                          HttpServletResponse response,
-                          HttpServletRequest request) throws RequestValidationException, FailedToLoginException {
+                          HttpServletResponse
+                                  response,
+                          HttpServletRequest request) throws RequestValidationException, FailedToLoginException, PasswordIncorrectException, NoSuchUserException {
 
         String ipAddress = request.getRemoteAddr();
         loginRequestValidator.validate(loginRequest, bindingResult);
@@ -114,7 +138,11 @@ public class AuthController {
         }
         UserContext userContext = loginService.login(loginRequest, ipAddress);
         String token = jwtService.tokenFor(userContext);
-        response.setHeader("Token", token);
+
+
+        response.addHeader("Token", token);
+
+
         return JsonUser.from(userContext);
     }
 
@@ -125,7 +153,7 @@ public class AuthController {
     public JsonUser loginDevice(@RequestBody RegisterDeviceRequest registerDeviceRequest,
                                 BindingResult bindingResult,
                                 HttpServletResponse response,
-                                HttpServletRequest request) throws NotFoundException, EntityAlreadyExistException, FailedToRegisterException {
+                                HttpServletRequest request) throws NotFoundException, EntityAlreadyExistException, FailedToRegisterException, FailedToLoginException, NoSuchUserException {
         User user = userService.findOneByEmail(registerDeviceRequest.getDeviceId());
         if (user != null) {
             UserContext userContext = UserContext.create(user);
@@ -158,7 +186,8 @@ public class AuthController {
         String token = sendUpdateMessage(credentials, user.getEmail(), bindingResult);
 
         mailSender.operateMessage(user.getEmail(), credentials.getClient(), token, true);
-        return new GenericResponse(Messages.MESSAGE_PASSWORD_RESET_SUCCESS, new String[]{user.getEmail()});
+//        return new GenericResponse(Messages.MESSAGE_PASSWORD_RESET_SUCCESS, new String[]{user.getEmail()});
+        return new GenericResponse(new String[]{});
     }
 
     @RequestMapping(value = "/update_password", method = POST, produces = APPLICATION_JSON_VALUE, consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE}
@@ -172,11 +201,12 @@ public class AuthController {
 
         UserContext user = userService.findUserByResetPasswordToken(updatePasswordRequest.getUpdatePasswordToken());
         if (user == null) {
-            throw new NoSuchUserException("No user for this reset password token exists");
+            throw new NoSuchUserException();
         }
         userService.updateUserPassword(user, updatePasswordRequest.getNewPassword(), updatePasswordRequest.getUpdatePasswordToken());
         logger.info("Password updated for user: " + user.getUserId());
-        return new GenericResponse(Messages.MESSAGE_PASSWORD_UPDATE_SUCCESS, new String[]{user.getEmail()});
+//        return new GenericResponse(Messages.MESSAGE_PASSWORD_UPDATE_SUCCESS, new String[]{user.getEmail()});
+        return new GenericResponse(new String[]{});
     }
 
 
@@ -186,7 +216,8 @@ public class AuthController {
         User user = (User) request.getAttribute("user");
         String token = sendUpdateMessage(credentials, user.getEmail(), bindingResult);
         mailSender.operateMessage(user.getEmail(), credentials.getClient(), token, false);
-        return new GenericResponse(Messages.MESSAGE_EMAIL_RESET_SUCCESS, new String[]{user.getEmail()});
+//        return new GenericResponse(Messages.MESSAGE_EMAIL_RESET_SUCCESS, new String[]{user.getEmail()});
+        return new GenericResponse(new String[]{});
     }
 
 
@@ -201,11 +232,12 @@ public class AuthController {
 
         UserContext user = userService.findUserByResetPasswordToken(updateEmailRequest.getUpdateEmailToken());
         if (user == null) {
-            throw new NoSuchUserException("No user for this reset password token exists");
+            throw new NoSuchUserException();
         }
         userService.updateUserEmail(user, updateEmailRequest.getNewEmail(), updateEmailRequest.getUpdateEmailToken());
         logger.info("Password updated for user: " + user.getUserId());
-        return new GenericResponse(Messages.MESSAGE_PASSWORD_UPDATE_SUCCESS, new String[]{user.getEmail()});
+//        return new GenericResponse(Messages.MESSAGE_PASSWORD_UPDATE_SUCCESS, new String[]{user.getEmail()});
+        return new GenericResponse(new String[]{});
     }
 
 
@@ -218,7 +250,7 @@ public class AuthController {
 
         User user = userService.findOneByEmail(email);
         if (user == null) {
-            throw new NoSuchUserException(email);
+            throw new NoSuchUserException();
         }
         String token = userService.createPasswordResetTokenForUser(user);
 
@@ -237,6 +269,22 @@ public class AuthController {
         }
         userService.merge(device, mergeRequest);
 
-        return new GenericResponse(Messages.MESSAGE_MERGE_REQUEST, new String[]{});
+//        return new GenericResponse(Messages.MESSAGE_MERGE_REQUEST, new String[]{});
+        return new GenericResponse(new String[]{});
+    }
+
+
+    @RequestMapping(method = GET, consumes = {APPLICATION_JSON_VALUE}, value = "/update_token")
+    public JsonToken updateToken(HttpResponse response, HttpServletRequest request) throws IOException, URISyntaxException, TokenNotExistException {
+        String token = request.getHeader("Authorization");
+        if ((tokenService.getToken(token)) != null) {
+            String newToken = jwtUtil.updateToken(token);
+            if (!newToken.equals(token)) {
+                return JsonToken.create(newToken);
+            }
+            return JsonToken.create(token);
+        } else {
+            throw new TokenNotExistException();
+        }
     }
 }

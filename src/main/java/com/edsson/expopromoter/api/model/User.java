@@ -1,6 +1,7 @@
 package com.edsson.expopromoter.api.model;
 
 import com.edsson.expopromoter.api.model.json.JsonEventInfo;
+import com.edsson.expopromoter.api.model.json.JsonTicket;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
@@ -54,6 +55,12 @@ public class User extends BaseModel {
     private Set<EventDAO> eventDAOList;
 
 
+    @JsonManagedReference
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private GpsDAO gpsDAO;
+
+
+
     public User() {
     }
 
@@ -67,6 +74,22 @@ public class User extends BaseModel {
         return eventDAOList;
     }
 
+
+    public Set<JsonTicket> getTickets() {
+        Set<JsonTicket> list = new HashSet<>();
+        if (tickets == null) {
+            return null;
+        }
+        for (TicketDAO ticketDAO : tickets) {
+            list.add(JsonTicket.from(ticketDAO));
+        }
+        return list;
+    }
+
+    public Set<TicketDAO> getTicketList() {
+        return this.tickets;
+    }
+
     public Set<JsonEventInfo> getEventDAOListID() {
         Set<JsonEventInfo> list = new HashSet<>();
         if (eventDAOList == null) {
@@ -78,9 +101,11 @@ public class User extends BaseModel {
         return list;
     }
 
+
     public void setEventDAOList(Set<EventDAO> eventDAOList) {
         this.eventDAOList = eventDAOList;
     }
+
 
     public void addToTicketDAOList(TicketDAO ticket) {
         this.tickets.add(ticket);
@@ -142,9 +167,6 @@ public class User extends BaseModel {
         this.roleDAO = userType;
     }
 
-    public Set<TicketDAO> getTickets() {
-        return tickets;
-    }
 
     public void setTickets(Set<TicketDAO> tickets) {
         this.tickets = tickets;

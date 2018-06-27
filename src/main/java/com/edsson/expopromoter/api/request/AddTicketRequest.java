@@ -2,7 +2,7 @@ package com.edsson.expopromoter.api.request;
 
 public class AddTicketRequest {
     private String imageBase64;
-    private int eventId;
+    private Integer eventId;
 
     public String getImageBase64() {
         return imageBase64;
@@ -13,6 +13,10 @@ public class AddTicketRequest {
     }
 
     public int getEventId() {
+
+        if (eventId==null){
+            return 0;
+        }
         return eventId;
     }
 

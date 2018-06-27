@@ -3,9 +3,10 @@ package com.edsson.expopromoter.api.config;
 import org.springframework.boot.web.servlet.MultipartConfigFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.multipart.MultipartResolver;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 import javax.servlet.MultipartConfigElement;
@@ -21,7 +22,6 @@ public class WebAppConfig extends WebMvcConfigurerAdapter {
 //    }
 
 
-
     @Bean
     public MultipartConfigElement multipartConfigElement() {
         MultipartConfigFactory factory = new MultipartConfigFactory();
@@ -29,4 +29,6 @@ public class WebAppConfig extends WebMvcConfigurerAdapter {
         factory.setMaxRequestSize("500MB");
         return factory.createMultipartConfig();
     }
+
+
 }

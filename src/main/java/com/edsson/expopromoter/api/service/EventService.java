@@ -18,8 +18,12 @@ import com.edsson.expopromoter.api.service.system_configuration.SystemConfigurat
 import javassist.NotFoundException;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.NonUniqueResultException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.text.ParseException;
@@ -39,6 +43,8 @@ public class EventService {
     private final SystemConfigurationServiceImpl systemConfigurationService;
     private final AmazonClient amazonClient;
     private final GPSRepository gpsRepository;
+    @Value("${expopromoter.system.configuration.admin.page_size}")
+    private String pageSize;
 
     @Autowired
     public EventService(GPSRepository gpsRepository, AmazonClient amazonClient, EventRepository eventRepository, SystemConfigurationServiceImpl systemConfigurationService, UserService userService, ImageOperator imageOperator) {
@@ -58,63 +64,73 @@ public class EventService {
         repository.save(eventDAO);
     }
 
-    public JsonUrl createEventDAO(CreateEventRequest createEventRequest, User user) throws IOException, SystemConfigurationException, ParseException, EntityAlreadyExistException, EventBadCredentialsException, NotFoundException, FailedToUploadImageToAWSException {
-        if (user != null) {
-            if (repository.findByName(createEventRequest.getName()) == null) {
-
-                EventDAO eventDAO = new EventDAO();
+    public JsonUrl createEventDAO(CreateEventRequest createEventRequest, User user) throws IOException, SystemConfigurationException, ParseException, EntityAlreadyExistException, EventBadCredentialsException, NotFoundException, FailedToUploadImageToAWSException, InternalServerErrorException {
 
 
-                if (createEventRequest.getName() != null && createEventRequest.getDateStart() != null && createEventRequest.getDateEnd() != null) {
-                    eventDAO.setName(createEventRequest.getName());
-                    eventDAO.setDateStart(formatter.parse(createEventRequest.getDateStart()));
-                    eventDAO.setDateEnd(formatter.parse(createEventRequest.getDateEnd()));
-
-                } else throw new EventBadCredentialsException("Bad Credentials");
-
-                eventDAO.setAgenda(createEventRequest.getAgenda());
-                eventDAO.setContacts(createEventRequest.getContacts());
-                eventDAO.setDescription(createEventRequest.getDescription());
-                eventDAO.setEventLocation(createEventRequest.getLocation());
-                eventDAO.setEventWebsite(createEventRequest.getWebsite());
-                eventDAO.setTicketUrl(createEventRequest.getTicketUrl());
-                eventDAO.setUserCreatorId(user);
-
-
-                user.addToEventDAOList(eventDAO);
-
-
-                logger.info(createEventRequest.getCoverImageBase64());
-
-                repository.save(eventDAO);
-
-                logger.info("New event saved! ");
-                eventDAO = repository.findByName(eventDAO.getName());
-
-                eventDAO.setEventInfoUrl(systemConfigurationService.getValueByKey(SystemConfigurationKeys.EventInfoURL.URL) + eventDAO.getId());
-
-                if (createEventRequest.getCoverImageBase64() != null) {
-                    String name = "cover_photo_" + eventDAO.getId();
-                    eventDAO.setPhotoPath(imageOperator.saveImage(createEventRequest.getCoverImageBase64(), name));
+        List<EventDAO> list = repository.findListByName(createEventRequest.getName());
+        if (list != null) {
+            for (EventDAO eventDAO : list) {
+                if (eventDAO.getUserCreatorId().getId() == user.getId()) {
+                    throw new EntityAlreadyExistException();
                 }
-                if (createEventRequest.getInfoImageBase64() != null) {
-                    String name = "info_photo_" + eventDAO.getId();
-                    eventDAO.setInfoPhotoPath(imageOperator.saveImage(createEventRequest.getInfoImageBase64(), name));
-                }
-
-                userService.save(user);
-
-                return new JsonUrl(eventDAO.getPhotoPath(), eventDAO.getInfoPhotoPath(), eventDAO.getId(), eventDAO.getEventInfoUrl());
-            } else {
-                logger.error(new EntityAlreadyExistException("Event with this name has already existed"));
-                throw new EntityAlreadyExistException("Event with this name has already existed");
             }
-
-        } else {
-            logger.error(new NotFoundException("User not found!"));
-            throw new NotFoundException("User not found!");
         }
+
+
+        EventDAO eventDAO = new EventDAO();
+
+        if (createEventRequest.getName() != null && createEventRequest.getDateStart() != null && createEventRequest.getDateEnd() != null) {
+            eventDAO.setName(createEventRequest.getName());
+            eventDAO.setDateStart(formatter.parse(createEventRequest.getDateStart()));
+            eventDAO.setDateEnd(formatter.parse(createEventRequest.getDateEnd()));
+
+        } else throw new EventBadCredentialsException();
+
+        eventDAO.setAgenda(createEventRequest.getAgenda());
+        eventDAO.setContacts(createEventRequest.getContacts());
+        eventDAO.setDescription(createEventRequest.getDescription());
+        eventDAO.setEventLocation(createEventRequest.getLocation());
+        eventDAO.setEventWebsite(createEventRequest.getWebsite());
+        eventDAO.setTicketUrl(createEventRequest.getTicketUrl());
+        eventDAO.setUserCreatorId(user);
+
+        user.addToEventDAOList(eventDAO);
+        try {
+
+            repository.save(eventDAO);
+
+        }
+        catch (Exception e){
+            throw new InternalServerErrorException();
+        }
+        logger.info("New event saved! ");
+        try {
+            list = repository.findListByName(eventDAO.getName());
+            for (EventDAO eventDAO1 : list) {
+                if (eventDAO.getUserCreatorId().getId() == eventDAO1.getUserCreatorId().getId()) ;
+                eventDAO = eventDAO1;
+            }
+        } catch (NonUniqueResultException exception) {
+            logger.error(exception);
+            throw new EntityAlreadyExistException();
+        }
+
+        eventDAO.setEventInfoUrl(systemConfigurationService.getValueByKey(SystemConfigurationKeys.EventInfoURL.URL) + eventDAO.getId());
+
+        if (createEventRequest.getCoverImageBase64() != null) {
+            String name = "cover_photo_" + eventDAO.getId();
+            eventDAO.setPhotoPath(imageOperator.saveImage(createEventRequest.getCoverImageBase64(), name));
+        }
+        if (createEventRequest.getInfoImageBase64() != null) {
+            String name = "info_photo_" + eventDAO.getId();
+            eventDAO.setInfoPhotoPath(imageOperator.saveImage(createEventRequest.getInfoImageBase64(), name));
+        }
+
+        userService.save(user);
+
+        return new JsonUrl(eventDAO.getPhotoPath(), eventDAO.getInfoPhotoPath(), eventDAO.getId(), eventDAO.getEventInfoUrl());
     }
+
 
     public JsonUrl update(CreateEventRequest eventDAO, HttpServletRequest request) throws NotFoundException, SystemConfigurationException, IOException, ParseException, FailedToUploadImageToAWSException {
 
@@ -179,10 +195,10 @@ public class EventService {
 
 
     public JsonEventInfo buildWithImage(EventDAO eventDAO) throws IOException {
-        String photo = eventDAO.getPhotoPath();
+//        String photo = eventDAO.getPhotoPath();
 
         JsonEventInfo json = JsonEventInfo.from(eventDAO);
-        json.setPhoto(photo);
+//        json.setPhoto(photo);
         return json;
     }
 
@@ -206,11 +222,20 @@ public class EventService {
 
     public void deleteEvent(int id, User user) throws NoSuchEventPerUserException {
         EventDAO eventDAO = repository.findById(id);
-        if (user.getEventDAOList().contains(eventDAO)) {
-            repository.removeEventDAOById(id);
-        } else {
-            throw new NoSuchEventPerUserException(user.getEmail());
+        if (eventDAO == null) {
+            throw new NoSuchEventPerUserException();
         }
+        for (EventDAO event : user.getEventDAOList()) {
+            if (eventDAO.equals(event)) {
+
+                repository.removeEventDAOById(id);
+            }
+        }
+//        if (user.getEventDAOList().contains(eventDAO)) {
+//            repository.removeEventDAOById(id);
+//        } else {
+
+//        }
     }
 
     public void createGPS(AddGPSRequest gpsRequest, User user) {
@@ -220,9 +245,19 @@ public class EventService {
         gps.setLongtitude(gpsRequest.getLongtitude());
         gps.setEventDAO(repository.findById(Integer.valueOf(gpsRequest.getEventId())));
         gps.setUser(userService.findOneById(user.getId()));
-
         gpsRepository.save(gps);
 
     }
 
+    public List<EventDAO> getListEventByPage(int page) {
+
+        PageRequest request =
+                new PageRequest(page, Integer.valueOf(pageSize), Sort.Direction.DESC, "id");
+        return repository.getEventsById(request);
+//
+//        Long maxId= repository.getMaxId();
+//        Integer from = Math.toIntExact(maxId - page * Integer.valueOf(pageSize));
+//        Integer to = Math.toIntExact(maxId - Integer.valueOf(pageSize) * (page + 1));
+//        return repository.getListOfEventInInterval(from,to);
+    }
 }

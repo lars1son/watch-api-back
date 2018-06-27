@@ -1,27 +1,26 @@
 package com.edsson.expopromoter.api.service;
 
 
-import com.edsson.expopromoter.api.config.SystemConfigurationKeys;
-import com.edsson.expopromoter.api.exceptions.EntityAlreadyExistException;
-import com.edsson.expopromoter.api.exceptions.FailedToUploadImageToAWSException;
-import com.edsson.expopromoter.api.exceptions.SystemConfigurationException;
-import com.edsson.expopromoter.api.model.EventDAO;
+import com.edsson.expopromoter.api.context.Messages;
+import com.edsson.expopromoter.api.exceptions.*;
 import com.edsson.expopromoter.api.model.TicketDAO;
 import com.edsson.expopromoter.api.model.User;
+import com.edsson.expopromoter.api.model.json.GenericResponse;
 import com.edsson.expopromoter.api.operator.ImageOperator;
 import com.edsson.expopromoter.api.repository.TicketRepository;
 import com.edsson.expopromoter.api.request.AddTicketRequest;
 import com.edsson.expopromoter.api.service.system_configuration.SystemConfigurationServiceImpl;
-import javax.servlet.http.HttpServletRequest;import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-
-import static org.aspectj.weaver.tools.cache.SimpleCacheFactory.path;
 
 @Service
 public class TicketService {
-
+    private static final Logger log = Logger.getLogger(TicketService.class);
     private final TicketRepository repository;
     private final SystemConfigurationServiceImpl systemConfigurationService;
     private final EventService eventService;
@@ -44,30 +43,42 @@ public class TicketService {
     }
 
 
-    public int addUserTicketFoEvent(AddTicketRequest addTicketRequest, HttpServletRequest request) throws SystemConfigurationException, IOException, EntityAlreadyExistException, FailedToUploadImageToAWSException {
-        TicketDAO ticket = new TicketDAO();
+    public int addUserTicketFoEvent(AddTicketRequest addTicketRequest, HttpServletRequest request) throws SystemConfigurationException, IOException, EntityAlreadyExistException, FailedToUploadImageToAWSException, EntityNotFoundException {
         User user = (User) request.getAttribute("user");
-        if (!user.getTickets().contains(ticket)) {
-//            String path = systemConfigurationService.getValueByKey(SystemConfigurationKeys.DefaultImagePath.PATH) + "\\user_" + user.getId().intValue();
-            String name = String.valueOf(user.getId().intValue());
+        if (addTicketRequest.getEventId() > 0) {
+            TicketDAO ticket = new TicketDAO();
 
-            EventDAO eventDAO = eventService.findOneById(addTicketRequest.getEventId());
+            ticket.setEventsByEventId(eventService.findOneById(addTicketRequest.getEventId()));
+            ticket.setUser(userService.findOneById(user.getId()));
 
-            //Local storage
-            String path = imageOperator.saveImage(addTicketRequest.getImageBase64(), name );
-
-
-            //Amazon Storage
-//            amazonClient.uploadFileTos3bucket(addTicketRequest.getImageBase64(),eventDAO.getName());
-
-            ticket.setImagePath(path);
-            ticket.setUser(user);
-            ticket.setEventsByEventId(eventDAO);
+            String name = String.valueOf("ticket_user_" + user.getId().intValue() + "_for_event_" + ticket.getEventsByEventId().getId());
+            if (addTicketRequest.getImageBase64() != null) {
+                ticket.setImagePath(imageOperator.saveImage(addTicketRequest.getImageBase64(), name));
+            }
             repository.save(ticket);
-
-            System.out.println("============================= count: " + eventDAO.getTickets().size());
-
+            log.info("Ticket created for event " + ticket.getEventsByEventId().getId());
             return ticket.getId();
-        } else throw new EntityAlreadyExistException("Ticket's already existed for this user");
+        } else {
+            throw new EntityNotFoundException();
+        }
+
+
     }
+
+    @Transactional
+    public GenericResponse deleteTicket(int id, HttpServletRequest request) throws NoSuchTicketPerUserException {
+        TicketDAO ticket = repository.findOneById(id);
+        User user = (User) request.getAttribute("user");
+
+
+        for (TicketDAO ticketDAO : user.getTicketList()) {
+            if (ticket.equals(ticketDAO)) {
+                repository.removeById(id);
+                return new GenericResponse(Messages.MESSAGE_DELETE_TICKET_SUCCESS, new String[]{});
+            }
+        }
+
+        throw new NoSuchTicketPerUserException(user.getEmail());
+    }
+
 }

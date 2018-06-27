@@ -1,10 +1,13 @@
 package com.edsson.expopromoter.api.model.json;
 
 import com.edsson.expopromoter.api.model.EventDAO;
+import com.edsson.expopromoter.api.model.TicketDAO;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
@@ -15,30 +18,35 @@ public class JsonEventInfo {
     private String ticketUrl;
     private String dateStart;
     private String dateEnd;
-    private String photo;
-    private String eventWebsite;
+    private String coverImageBase64;
+    private String infoImageBase64;
+    private String website;
     private String eventLocation;
     private String description;
     private String agenda;
     private String contacts;
+    private String eventInfoUrl;
     private Long userCreatorId;
-
+    private Set<JsonTicket>  ticketDAOS;
     public JsonEventInfo() {
     }
 
-    public JsonEventInfo(int id, String name, String ticketUrl, Date dateStart, Date dateEnd, String photoPath, String eventWebsite, String eventLocation, String description, String agenda, String contacts,   Long userCreatorId) {
+    public JsonEventInfo(int id, String name, String ticketUrl, Date dateStart, Date dateEnd,  String eventWebsite, String eventLocation, String description, String agenda, String contacts,String coverImageBase64, String infoImageBase64 ,  Long userCreatorId,  String eventInfoUrl, Set<JsonTicket> tickets) {
         this.id = id;
         this.name = name;
         this.ticketUrl = ticketUrl;
         this.dateStart = formatter.format(dateStart);
         this.dateEnd = formatter.format(dateEnd);
-        this.photo = photoPath;
-        this.eventWebsite = eventWebsite;
+        this.coverImageBase64 = coverImageBase64;
+        this.infoImageBase64=infoImageBase64;
+        this.website = eventWebsite;
         this.eventLocation = eventLocation;
         this.description = description;
         this.agenda = agenda;
         this.contacts = contacts;
         this.userCreatorId = userCreatorId;
+        this.eventInfoUrl=eventInfoUrl;
+        this.ticketDAOS=tickets;
     }
 
     public static JsonEventInfo from(EventDAO eventDAO) {
@@ -49,17 +57,20 @@ public class JsonEventInfo {
                eventDAO.getTicketUrl(),
                eventDAO.getDateStart(),
                eventDAO.getDateEnd(),
-               eventDAO.getPhotoPath(),
                eventDAO.getEventWebsite(),
                eventDAO.getEventLocation(),
                eventDAO.getDescription(),
                eventDAO.getAgenda(),
                eventDAO.getContacts(),
-               eventDAO.getUserCreatorId().getId()
+               eventDAO.getPhotoPath(),
+               eventDAO.getInfoPhotoPath(),
+               eventDAO.getUserCreatorId().getId(),
+               eventDAO.getEventInfoUrl(),
+               eventDAO.getTickets()
         );
     }
 
     public void setPhoto(String photo) {
-        this.photo = photo;
+        this.coverImageBase64 = photo;
     }
 }

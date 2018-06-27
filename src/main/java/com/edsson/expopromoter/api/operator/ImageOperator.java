@@ -94,7 +94,7 @@ public class ImageOperator {
         S3Object s3Object = s3client.getObject(new GetObjectRequest(bucketName, fileName));
         logger.info("Image '" + fileName + "'  created. URL: " + s3Object.getObjectContent().getHttpRequest().getURI().toString());
 
-        return s3Object.getObjectContent().getHttpRequest().getURI().toString();
+        return s3Object.getObjectContent().getHttpRequest().getURI().toString().replace("https","http");
 
     }
 }

@@ -1,12 +1,15 @@
 package com.edsson.expopromoter.api.model;
 
+import com.edsson.expopromoter.api.model.json.JsonTicket;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "events")
@@ -65,12 +68,18 @@ public class EventDAO extends BaseModel {
     private String eventInfoUrl;
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.EAGER,orphanRemoval=true)
     private List<TicketDAO> tickets;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_creator_id", referencedColumnName = "id", nullable = false)
     private User userCreatorId;
+
+
+    @JsonManagedReference
+    @OneToOne(mappedBy = "eventDAO", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private GpsDAO gpsDAO;
+
 
 
     public EventDAO() {
@@ -102,8 +111,15 @@ public class EventDAO extends BaseModel {
         this.ticketUrl = ticketUrl;
     }
 
-    public List<TicketDAO> getTickets() {
-        return tickets;
+    public Set<JsonTicket> getTickets() {
+        Set<JsonTicket> list = new HashSet<>();
+        if (tickets == null) {
+            return null;
+        }
+        for (TicketDAO ticketDAO : tickets) {
+            list.add(JsonTicket.from(ticketDAO));
+        }
+        return list;
     }
 
     public void setTickets(List<TicketDAO> tickets) {
@@ -212,28 +228,9 @@ public class EventDAO extends BaseModel {
 
     @Override
     public boolean equals(Object o) {
-//        if (this == o) return true;
-//        if (o == null || getClass() != o.getClass()) return false;
-
         EventDAO that = (EventDAO) o;
-        if (!this.getName().equals(that.getName()))
-            return false;
         if (this.userCreatorId.getId() != that.userCreatorId.getId())
             return false;
-//        if (id != that.id) return false;
-//        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-//
-//        if (dateStart != null ? !dateStart.equals(that.dateStart) : that.dateStart != null) return false;
-//        if (dateEnd != null ? !dateEnd.equals(that.dateEnd) : that.dateEnd != null) return false;
-//        if (photoPath != null ? !photoPath.equals(that.photoPath) : that.photoPath != null) return false;
-//        if (eventWebsite != null ? !eventWebsite.equals(that.eventWebsite) : that.eventWebsite != null) return false;
-//        if (eventLocation != null ? !eventLocation.equals(that.eventLocation) : that.eventLocation != null)
-//            return false;
-//        if (description != null ? !description.equals(that.description) : that.description != null) return false;
-//        if (agenda != null ? !agenda.equals(that.agenda) : that.agenda != null) return false;
-//        if (contacts != null ? !contacts.equals(that.contacts) : that.contacts != null) return false;
-
-
         return true;
     }
 

@@ -15,7 +15,6 @@ public class CreateEventRequest {
     private String dateEnd;
     private String location;
     private String website;
-//    private int eventId;
 
     private String description;
     private String agenda;

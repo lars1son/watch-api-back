@@ -1,5 +1,6 @@
 package com.edsson.expopromoter.api.validator;
 
+import com.edsson.expopromoter.api.exceptions.NoSuchUserException;
 import com.edsson.expopromoter.api.request.RegistrationRequest;
 import com.edsson.expopromoter.api.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,8 +43,12 @@ public class UserRegistrationRequestValidator implements Validator {
             if (username.length() < MIN_LOGIN_SIZE || username.length() > MAX_LOGIN_SIZE) {
                 errors.rejectValue("email", "Size.userForm.username");
             }
-            if (userService.getUser(username)!=null) {
-                errors.rejectValue("email", "Duplicate.userForm.username");
+            try {
+                if (userService.getUser(username)!=null) {
+                    errors.rejectValue("email", "Duplicate.userForm.username");
+                }
+            } catch (NoSuchUserException e) {
+                e.printStackTrace();
             }
         }
 

@@ -6,9 +6,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import static java.lang.String.format;
 
-@ResponseStatus(value= HttpStatus.NOT_FOUND)  // 404
+@ResponseStatus(value= HttpStatus.NOT_FOUND,reason = "User not found")  // 404
 public class NoSuchUserException extends Exception {
-    public NoSuchUserException(String username) {
-        super(format("No Such user exception %s", username));
+    public NoSuchUserException( ) {
+        super();
     }
 }

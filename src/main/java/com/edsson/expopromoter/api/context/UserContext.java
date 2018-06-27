@@ -3,6 +3,7 @@ package com.edsson.expopromoter.api.context;
 import com.edsson.expopromoter.api.model.RoleDAO;
 import com.edsson.expopromoter.api.model.User;
 import com.edsson.expopromoter.api.model.json.JsonEventInfo;
+import com.edsson.expopromoter.api.model.json.JsonTicket;
 
 import java.util.Date;
 import java.util.Set;
@@ -39,6 +40,8 @@ public class UserContext {
         userContext.contactEmail = userDAO.getContactEmail();
         userContext.fullName = userDAO.getFullName();
         userContext.listEvent = userDAO.getEventDAOListID();
+
+
         return userContext;
     }
 
@@ -47,19 +50,6 @@ public class UserContext {
         this.passwordHash = passwordHash;
     }
 
-    //    public UserDAO toUserDAO(){
-//        UserDAO userDAO = new UserDAO();
-//        userDAO.setFirstName(firstName);
-//        userDAO.setLastName(secondName);
-//        userDAO.setEmail(email);
-//        userDAO.setLogin(login);
-//        userDAO.setPasswordHash(passwordHash);
-//        userDAO.setUserId(userId);
-//        userDAO.setRoles(authorities);
-//        userDAO.setLocale(locale);
-//        userDAO.setLocked(isUserLocked);
-//        return userDAO;
-//    }
 
 
     public void setEmail(String email) {

@@ -3,6 +3,7 @@ package com.edsson.expopromoter.api;
 import com.edsson.expopromoter.api.core.filter.JwtFilter;
 import com.edsson.expopromoter.api.core.filter.PermissionHandlerInterceptor;
 import com.edsson.expopromoter.api.core.service.JwtUtil;
+import com.edsson.expopromoter.api.repository.TokenRepository;
 import com.edsson.expopromoter.api.service.UserService;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
@@ -33,9 +34,9 @@ public class Application extends SpringBootServletInitializer {
 
     @Bean
     @Autowired
-    public FilterRegistrationBean jwtFilterRegistration(JwtUtil jwtUtil, UserService userService) {
+    public FilterRegistrationBean jwtFilterRegistration(JwtUtil jwtUtil, UserService userService, TokenRepository repository) {
         FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean();
-        filterRegistrationBean.setFilter(new JwtFilter(jwtUtil, userService));
+        filterRegistrationBean.setFilter(new JwtFilter(repository,jwtUtil, userService));
 
         filterRegistrationBean.addUrlPatterns("/*");
 
