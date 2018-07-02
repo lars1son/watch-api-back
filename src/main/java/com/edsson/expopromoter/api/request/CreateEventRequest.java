@@ -21,6 +21,22 @@ public class CreateEventRequest {
     private String contacts;
     private String ticketUrl;
 
+
+    public CreateEventRequest() {
+    }
+
+    public CreateEventRequest(String dateStart, String name, String dateEnd, String location, String website, String description, String agenda, String contacts, String ticketUrl) {
+        this.dateStart = dateStart;
+        this.name = name;
+        this.dateEnd = dateEnd;
+        this.location = location;
+        this.website = website;
+        this.description = description;
+        this.agenda = agenda;
+        this.contacts = contacts;
+        this.ticketUrl = ticketUrl;
+    }
+
     public String getTicketUrl() {
         return ticketUrl;
     }

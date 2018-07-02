@@ -35,4 +35,5 @@ public interface EventRepository extends CrudRepository<EventDAO, String> {
 
     @Query(value = "select max(e.id) from EventDAO e")
     Long getMaxId();
+
 }

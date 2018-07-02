@@ -7,6 +7,7 @@ import com.edsson.expopromoter.api.model.EventDAO;
 import com.edsson.expopromoter.api.model.GpsDAO;
 import com.edsson.expopromoter.api.model.User;
 import com.edsson.expopromoter.api.model.json.JsonEventInfo;
+import com.edsson.expopromoter.api.model.json.JsonPageCount;
 import com.edsson.expopromoter.api.model.json.JsonUrl;
 import com.edsson.expopromoter.api.operator.ImageOperator;
 import com.edsson.expopromoter.api.repository.EventRepository;
@@ -99,8 +100,7 @@ public class EventService {
 
             repository.save(eventDAO);
 
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             throw new InternalServerErrorException();
         }
         logger.info("New event saved! ");
@@ -138,7 +138,7 @@ public class EventService {
         if (user != null) {
 
             EventDAO savedEvent = repository.findById(eventDAO.getId());
-            if (user.getEventDAOList().contains(savedEvent)) {
+            if (user.getEventDAOList().contains(savedEvent) || user.getRole().getRole().equals("ROLE_ADMIN")) {
 
                 user.deleteRecordFromEventDAOList(savedEvent);
 
@@ -254,10 +254,10 @@ public class EventService {
         PageRequest request =
                 new PageRequest(page, Integer.valueOf(pageSize), Sort.Direction.DESC, "id");
         return repository.getEventsById(request);
-//
-//        Long maxId= repository.getMaxId();
-//        Integer from = Math.toIntExact(maxId - page * Integer.valueOf(pageSize));
-//        Integer to = Math.toIntExact(maxId - Integer.valueOf(pageSize) * (page + 1));
-//        return repository.getListOfEventInInterval(from,to);
+
+    }
+
+    public double pageCount(){
+        return  (Math.ceil(Double.valueOf(repository.count())/Double.valueOf(pageSize)));
     }
 }

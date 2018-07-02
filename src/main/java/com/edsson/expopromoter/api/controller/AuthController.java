@@ -79,21 +79,19 @@ public class AuthController {
     )
     public JsonUser registration(@RequestBody RegistrationRequest registrationRequest,
                                  BindingResult bindingResult,
-                                 HttpServletResponse response) throws FailedToRegisterException, RequestValidationException, EntityAlreadyExistException, FailedToLoginException, NoSuchUserException {
+                                 HttpServletResponse response) throws FailedToRegisterException, RequestValidationException, EntityAlreadyExistException, FailedToLoginException, NoSuchUserException, InternalServerErrorException {
         logger.info("Call controller method: /registration ");
         userRegistrationRequestValidator.validate(registrationRequest, bindingResult);
         if (bindingResult.hasErrors()) {
             throw new RequestValidationException(bindingResult);
         }
-        // Create user
-
 
         userService.create(registrationRequest.getPassword(), registrationRequest.getEmail());
 
         return toKenForUser(registrationRequest.getEmail(), response);
     }
 
-    public JsonUser toKenForUser(String name, HttpServletResponse response) throws FailedToLoginException, NoSuchUserException {
+    public JsonUser toKenForUser(String name, HttpServletResponse response) throws FailedToLoginException, NoSuchUserException, InternalServerErrorException {
         UserContext context = userService.getUser(name);
         if (context != null) {
             try {
@@ -129,7 +127,7 @@ public class AuthController {
                           BindingResult bindingResult,
                           HttpServletResponse
                                   response,
-                          HttpServletRequest request) throws RequestValidationException, FailedToLoginException, PasswordIncorrectException, NoSuchUserException {
+                          HttpServletRequest request) throws RequestValidationException, FailedToLoginException, PasswordIncorrectException, NoSuchUserException, InternalServerErrorException {
 
         String ipAddress = request.getRemoteAddr();
         loginRequestValidator.validate(loginRequest, bindingResult);
@@ -139,9 +137,7 @@ public class AuthController {
         UserContext userContext = loginService.login(loginRequest, ipAddress);
         String token = jwtService.tokenFor(userContext);
 
-
         response.addHeader("Token", token);
-
 
         return JsonUser.from(userContext);
     }
@@ -153,7 +149,7 @@ public class AuthController {
     public JsonUser loginDevice(@RequestBody RegisterDeviceRequest registerDeviceRequest,
                                 BindingResult bindingResult,
                                 HttpServletResponse response,
-                                HttpServletRequest request) throws NotFoundException, EntityAlreadyExistException, FailedToRegisterException, FailedToLoginException, NoSuchUserException {
+                                HttpServletRequest request) throws NotFoundException, EntityAlreadyExistException, FailedToRegisterException, FailedToLoginException, NoSuchUserException, InternalServerErrorException {
         User user = userService.findOneByEmail(registerDeviceRequest.getDeviceId());
         if (user != null) {
             UserContext userContext = UserContext.create(user);
@@ -165,6 +161,7 @@ public class AuthController {
             return toKenForUser(registerDeviceRequest.getDeviceId(), response);
         }
     }
+
 
 
     @RequestMapping(value = "/forgot_password", method = POST, produces = APPLICATION_JSON_VALUE, consumes = {APPLICATION_JSON_VALUE, TEXT_PLAIN_VALUE}
@@ -275,16 +272,19 @@ public class AuthController {
 
 
     @RequestMapping(method = GET, consumes = {APPLICATION_JSON_VALUE}, value = "/update_token")
-    public JsonToken updateToken(HttpResponse response, HttpServletRequest request) throws IOException, URISyntaxException, TokenNotExistException {
+    public JsonToken updateToken(HttpResponse response, HttpServletRequest request) throws IOException, URISyntaxException, TokenNotExistException, RefreshTokenException, InternalServerErrorException {
         String token = request.getHeader("Authorization");
-        if ((tokenService.getToken(token)) != null) {
-            String newToken = jwtUtil.updateToken(token);
-            if (!newToken.equals(token)) {
-                return JsonToken.create(newToken);
-            }
-            return JsonToken.create(token);
-        } else {
-            throw new TokenNotExistException();
+        JsonToken jsonToken = null;
+        try {
+            jsonToken = JsonToken.create(jwtUtil.updateToken(token));
         }
+        catch (Exception e){
+            logger.error(new RefreshTokenException());
+            throw new RefreshTokenException();
+
+        }
+        return jsonToken;
+
+
     }
 }

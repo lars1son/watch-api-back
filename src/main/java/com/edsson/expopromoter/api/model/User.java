@@ -60,8 +60,16 @@ public class User extends BaseModel {
     private GpsDAO gpsDAO;
 
 
+    @JsonManagedReference
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private TokenDAO tokenDAO;
+
 
     public User() {
+    }
+
+    public TokenDAO getTokenDAO() {
+        return tokenDAO;
     }
 
 

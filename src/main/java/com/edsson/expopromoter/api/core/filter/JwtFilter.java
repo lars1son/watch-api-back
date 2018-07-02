@@ -7,7 +7,6 @@ import com.edsson.expopromoter.api.repository.TokenRepository;
 import com.edsson.expopromoter.api.service.UserService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.filter.GenericFilterBean;
@@ -20,6 +19,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.TreeSet;
@@ -36,10 +38,10 @@ public class JwtFilter extends GenericFilterBean {
     private final UserService userService;
     private final TokenRepository tokenRepository;
 
-    public JwtFilter( TokenRepository tokenRepository,JwtUtil jwtUtil, UserService userService) {
+    public JwtFilter(TokenRepository tokenRepository, JwtUtil jwtUtil, UserService userService) {
         this.jwtUtil = jwtUtil;
         this.userService = userService;
-        this.tokenRepository=tokenRepository;
+        this.tokenRepository = tokenRepository;
     }
 
     @Transactional
@@ -87,27 +89,36 @@ public class JwtFilter extends GenericFilterBean {
             try {
                 if (tokenRepository.findOneByToken(authHeader) != null) {
 
-                    Claims c = jwtUtil.parseToken(authHeader);
-                    httpRequest.setAttribute("claims", c);
-                    LinkedHashMap user = c.get("user", LinkedHashMap.class);
-                    httpRequest.setAttribute("user_roles", user.get("roles"));
 
-                    User u = userService.findOneById(Long.valueOf((Integer) user.get("id")));
-                    httpRequest.setAttribute("user", u);
+                    Date expirationDate = tokenRepository.findOneByToken(authHeader).getUpdatedAt();
+                    LocalDateTime ldt = LocalDateTime.ofInstant(expirationDate.toInstant(), ZoneId.systemDefault());
+                    ldt = ldt.plusHours(2);
+                    if (ldt.isBefore(LocalDateTime.now())) {
+                        logger.info(new TokenNotExistException());
+                        httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                    } else {
 
-                    if (httpRequest.getRequestURI().contains("admin/")) {
-                        if (!u.getRole().getRole().equals("ROLE_ADMIN")) {
-                            res.reset();
-                            httpResponse.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE);
+                        Claims c = jwtUtil.parseToken(authHeader);
+                        httpRequest.setAttribute("claims", c);
+                        LinkedHashMap user = c.get("user", LinkedHashMap.class);
+                        httpRequest.setAttribute("user_roles", user.get("roles"));
+
+                        User u = userService.findOneById(Long.valueOf((Integer) user.get("id")));
+                        httpRequest.setAttribute("user", u);
+
+                        if (httpRequest.getRequestURI().contains("admin/")) {
+                            if (!u.getRole().getRole().equals("ROLE_ADMIN")) {
+                                res.reset();
+                                httpResponse.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE);
+                            }
+
                         }
 
+                        filterChain.doFilter(httpRequest, res);
                     }
-
-                    filterChain.doFilter(httpRequest, res);
-
-                }
-                else {
+                } else {
                     logger.info(new TokenNotExistException());
+                    httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                     throw new TokenNotExistException();
                 }
 

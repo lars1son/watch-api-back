@@ -4,27 +4,31 @@ import com.edsson.expopromoter.api.context.UserContext;
 import com.edsson.expopromoter.api.core.service.JwtUtil;
 import com.edsson.expopromoter.api.exceptions.*;
 import com.edsson.expopromoter.api.model.User;
-import com.edsson.expopromoter.api.model.json.GenericResponse;
-import com.edsson.expopromoter.api.model.json.JsonAdminUser;
-import com.edsson.expopromoter.api.model.json.JsonEventList;
-import com.edsson.expopromoter.api.model.json.ListJsonJpsPerEvent;
+import com.edsson.expopromoter.api.model.json.*;
 import com.edsson.expopromoter.api.request.DeleteEventRequest;
 import com.edsson.expopromoter.api.request.LoginRequest;
 import com.edsson.expopromoter.api.service.AdministratorService;
+import com.edsson.expopromoter.api.service.EventService;
 import com.edsson.expopromoter.api.service.LoginService;
 import com.edsson.expopromoter.api.validator.LoginRequestValidator;
 import io.swagger.annotations.Api;
+import javassist.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.text.ParseException;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.http.MediaType.MULTIPART_FORM_DATA;
+import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
@@ -37,15 +41,15 @@ public class AdministratorController {
     private final LoginRequestValidator loginRequestValidator;
     private final LoginService loginService;
     private final JwtUtil jwtService;
-
+    private final EventService eventService;
 
     @Autowired
-    public AdministratorController( JwtUtil jwtService, LoginService loginService, AdministratorService service, LoginRequestValidator loginRequestValidator) {
+    public AdministratorController(EventService eventService, JwtUtil jwtService, LoginService loginService, AdministratorService service, LoginRequestValidator loginRequestValidator) {
         this.service = service;
         this.jwtService = jwtService;
         this.loginService = loginService;
         this.loginRequestValidator = loginRequestValidator;
-
+        this.eventService = eventService;
     }
 
 
@@ -56,7 +60,7 @@ public class AdministratorController {
     public JsonAdminUser login(@RequestBody LoginRequest loginRequest,
                                BindingResult bindingResult,
                                HttpServletResponse response,
-                               HttpServletRequest request) throws RequestValidationException, FailedToLoginException, PasswordIncorrectException, PermissionsNotEnoughException, NoSuchUserException {
+                               HttpServletRequest request) throws RequestValidationException, FailedToLoginException, PasswordIncorrectException, PermissionsNotEnoughException, NoSuchUserException, InternalServerErrorException {
 
         String ipAddress = request.getRemoteAddr();
         loginRequestValidator.validate(loginRequest, bindingResult);
@@ -65,7 +69,14 @@ public class AdministratorController {
         }
         UserContext userContext = loginService.adminLogin(loginRequest, ipAddress);
         String token = jwtService.tokenFor(userContext);
-        return JsonAdminUser.from(userContext.getEmail(), token);
+        double count;
+        try {
+
+            count = eventService.pageCount();
+        } catch (Exception e) {
+            throw new InternalServerErrorException();
+        }
+        return JsonAdminUser.from(userContext.getEmail(), token,count);
     }
 
 
@@ -101,7 +112,7 @@ public class AdministratorController {
     )
     public JsonEventList getEventList(@PathVariable("page") int page, HttpServletResponse response, HttpServletRequest request) throws InternalServerErrorException {
 
-        JsonEventList jsonEventList = new JsonEventList(service.getEventList(page) );
+        JsonEventList jsonEventList = new JsonEventList(service.getEventList(page));
 
         return jsonEventList;
     }
@@ -112,7 +123,7 @@ public class AdministratorController {
             consumes = {APPLICATION_JSON_VALUE}
     )
     public ListJsonJpsPerEvent gpsPerEvent(@PathVariable("id") Long id, HttpServletResponse response, HttpServletRequest request) throws InternalServerErrorException, GpsForThisEventNotFoundException {
-      return  service.buildInfoByJps(id);
+        return service.buildInfoByJps(id);
     }
 
 
@@ -123,12 +134,19 @@ public class AdministratorController {
         }
         return (String) request.getAttribute("Old_Token");
     }
-//
-//    @RequestMapping(value= "/**", method=RequestMethod.OPTIONS)
-//    public void corsHeaders(HttpServletResponse response) {
-//        response.addHeader("Access-Control-Allow-Origin", "*");
-//        response.addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-//        response.addHeader("Access-Control-Allow-Headers", "origin, content-type, accept, x-requested-with");
-//        response.addHeader("Access-Control-Max-Age", "3600");
-//    }
+
+
+
+@CrossOrigin
+    @PostMapping(path = "/upload_csv")
+
+    public void uploadFile(@RequestPart(value = "file") MultipartFile multiPartFile, HttpServletResponse response, HttpServletRequest request) throws IOException, NotFoundException, SystemConfigurationException, ParseException, InternalServerErrorException, FailedToUploadImageToAWSException, EventBadCredentialsException, EntityAlreadyExistException {
+        User user = (User) request.getAttribute("user");
+        try {
+            service.buildEventsFromCsv(multiPartFile, user);
+        } catch (Exception e) {
+            response.sendError(409);
+        }
+        response.setStatus(200);
+    }
 }

@@ -14,12 +14,22 @@ public class TokenDAO extends BaseModel {
     private String token;
 
 
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name="user_id")
+    private User user;
+
     public TokenDAO( ) {
 
     }
 
-    public TokenDAO(String token) {
+
+    public User getUser() {
+        return user;
+    }
+
+    public TokenDAO(String token, User user) {
         this.token = token;
+        this.user = user;
     }
 
     public int getId() {

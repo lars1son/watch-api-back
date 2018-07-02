@@ -3,6 +3,8 @@ package com.edsson.expopromoter.api.core.service;
 import com.edsson.expopromoter.api.ExpopromoterProperties;
 import com.edsson.expopromoter.api.config.SecretKeyProvider;
 import com.edsson.expopromoter.api.context.UserContext;
+import com.edsson.expopromoter.api.exceptions.InternalServerErrorException;
+import com.edsson.expopromoter.api.exceptions.TokenNotExistException;
 import com.edsson.expopromoter.api.model.Credential;
 import com.edsson.expopromoter.api.model.TokenDAO;
 import com.edsson.expopromoter.api.repository.TokenRepository;
@@ -12,11 +14,11 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Date;
 
 import static java.time.ZoneOffset.UTC;
@@ -50,42 +52,73 @@ public class JwtUtil {
         return Jwts.parser().setSigningKey(secretKeyProvider.getKey()).parseClaimsJws(token).getBody();
     }
 
-    public String tokenFor(UserContext user) throws JwtException {
+    public String tokenFor(UserContext user) throws JwtException, InternalServerErrorException {
         try {
             byte[] secretKey = secretKeyProvider.getKey();
-            Date expiration = Date.from(LocalDateTime.now(UTC).plusHours(2).toInstant(UTC));
-            String token = Jwts.builder()
-                    .setSubject(user.getEmail())
-                    .setExpiration(expiration)
-                    .setIssuer(ISSUER)
-                    .claim("user", new Credential(user))
-                    .signWith(SignatureAlgorithm.HS512, secretKey)
-                    .compact();
-            TokenDAO tokenDAO = new TokenDAO(token);
+//            Date expiration = Date.from(LocalDateTime.now(UTC).plusHours(2).toInstant(UTC));
+            Date expiration = Date.from(LocalDateTime.now(UTC).plusMinutes(3).toInstant(UTC));
 
-            tokenRepository.save(tokenDAO);
+            String token;
+            if (user.getEmail().contains("UID_")) {
+                token = Jwts.builder()
+                        .setSubject(user.getEmail())
+                        .setIssuer(ISSUER)
+                        .claim("user", new Credential(user))
+                        .signWith(SignatureAlgorithm.HS512, secretKey)
+                        .compact();
+            } else {
+                token = Jwts.builder()
+                        .setSubject(user.getEmail())
+                        .setExpiration(expiration)
+                        .setIssuer(ISSUER)
+                        .claim("user", new Credential(user))
+                        .signWith(SignatureAlgorithm.HS512, secretKey)
+                        .compact();
+//            TokenDAO tokenDAO = new TokenDAO(token);
+            }
+
+            TokenDAO tokenExist = tokenRepository.findOneByUser_Id(user.getUserId());
+            if (tokenExist != null) {
+                tokenExist.setToken(token);
+
+            } else {
+                tokenExist = new TokenDAO(token, userService.findOneById(user.getUserId()));
+            }
+            try {
+                tokenRepository.save(tokenExist);
+
+            } catch (Exception e) {
+                logger.error(e);
+                throw new InternalServerErrorException();
+            }
 
             return token;
         } catch (IOException | URISyntaxException e) {
             throw new JwtException(e.getMessage());
         }
+
     }
 
-    public String updateToken(String token) throws IOException, URISyntaxException {
+    @Transactional
+    public String updateToken(String token) throws IOException, URISyntaxException, TokenNotExistException, InternalServerErrorException {
         byte[] secretKey = secretKeyProvider.getKey();
         Jws<Claims> claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
         UserContext user = UserContext.create(userService.findOneByEmail(claims.getBody().getSubject()));
 
-        Date expirationDate = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody().getExpiration();
-        LocalDateTime ldt = LocalDateTime.ofInstant(expirationDate.toInstant(), ZoneId.systemDefault());
+//        Date expirationDate = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody().getExpiration();
+//        LocalDateTime ldt = LocalDateTime.ofInstant(expirationDate.toInstant(), ZoneId.systemDefault());
 
-        if (ldt.isBefore(LocalDateTime.now())) {
-            tokenRepository.deleteByToken(token);
-            logger.info("Expiration date is in 10 minutes. New token will be returned.");
-            return tokenFor(user);
-        } else {
-            logger.info("Expiration date is OK. ");
-            return token;
-        }
+//        if (tokenRepository.existByToken(token)) {
+//            tokenRepository.deleteByToken(token);
+//        }
+//        else throw new TokenNotExistException();
+
+
+        logger.info("New token returned.");
+        return tokenFor(user);
+//        } else {
+//            logger.info("Expiration date is OK. ");
+//            return token;
+//        }
     }
 }

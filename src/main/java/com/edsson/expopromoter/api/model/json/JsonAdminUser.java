@@ -7,20 +7,26 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 public class JsonAdminUser {
     String email;
     String token;
+    long count;
 
     public JsonAdminUser() {
 
     }
 
-    public JsonAdminUser(String email, String token) {
+    public JsonAdminUser(String email, String token, long count) {
         this.email = email;
         this.token = token;
+        this.count= count;
     }
 
-    public static JsonAdminUser from(String email, String token) {
+    public static JsonAdminUser from(String email, String token, double count) {
         return new JsonAdminUser(
-                email, token
+                email, token,(long) count
         );
+    }
+
+    public long getCount() {
+        return count;
     }
 
     public String getEmail() {
