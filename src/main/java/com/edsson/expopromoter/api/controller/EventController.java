@@ -58,7 +58,7 @@ public class EventController {
             return service.getUpdatedEvent(updatedEventsRequest, ((User) request.getAttribute("user")).getId());
         }
         catch (Exception e){
-            logger.error(e);
+            logger.error("Event update error. ",e);
             throw new InternalServerErrorException();
         }
     }
@@ -71,7 +71,7 @@ public class EventController {
         try {
             service.deleteEvent(Integer.valueOf(deleteEventRequest.getId()), user);
         } catch (NoSuchEventPerUserException e) {
-            logger.error(new NoSuchEventPerUserException());
+            logger.error("Delete event failed", e);
             return new GenericResponse(Messages.MESSAGE_DELETE_EVENT_FAILED, new String[]{});
         }
 

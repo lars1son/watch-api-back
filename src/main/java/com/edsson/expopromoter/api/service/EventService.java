@@ -72,6 +72,7 @@ public class EventService {
         if (list != null) {
             for (EventDAO eventDAO : list) {
                 if (eventDAO.getUserCreatorId().getId() == user.getId()) {
+                    logger.error("Entity has already exist exception");
                     throw new EntityAlreadyExistException();
                 }
             }
@@ -101,6 +102,7 @@ public class EventService {
             repository.save(eventDAO);
 
         } catch (Exception e) {
+            e.printStackTrace();
             throw new InternalServerErrorException();
         }
         logger.info("New event saved! ");
@@ -111,7 +113,7 @@ public class EventService {
                 eventDAO = eventDAO1;
             }
         } catch (NonUniqueResultException exception) {
-            logger.error(exception);
+            logger.error("NonUniqueResultException",exception);
             throw new EntityAlreadyExistException();
         }
 
@@ -127,7 +129,7 @@ public class EventService {
         }
 
         userService.save(user);
-
+        logger.info("New event created: [ " + eventDAO.getName() + ", "+ eventDAO.getDateStart() + " ,"+ eventDAO.getDateEnd() + ", "+ eventDAO.getEventInfoUrl()+"]");
         return new JsonUrl(eventDAO.getPhotoPath(), eventDAO.getInfoPhotoPath(), eventDAO.getId(), eventDAO.getEventInfoUrl());
     }
 

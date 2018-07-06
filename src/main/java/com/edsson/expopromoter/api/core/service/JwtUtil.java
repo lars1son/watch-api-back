@@ -56,7 +56,7 @@ public class JwtUtil {
         try {
             byte[] secretKey = secretKeyProvider.getKey();
 //            Date expiration = Date.from(LocalDateTime.now(UTC).plusHours(2).toInstant(UTC));
-            Date expiration = Date.from(LocalDateTime.now(UTC).plusMinutes(3).toInstant(UTC));
+            Date expiration = Date.from(LocalDateTime.now(UTC).plusMinutes(2).toInstant(UTC));
 
             String token;
             if (user.getEmail().contains("UID_")) {
@@ -88,7 +88,7 @@ public class JwtUtil {
                 tokenRepository.save(tokenExist);
 
             } catch (Exception e) {
-                logger.error(e);
+                logger.error("Unexpected error", e);
                 throw new InternalServerErrorException();
             }
 
@@ -101,24 +101,12 @@ public class JwtUtil {
 
     @Transactional
     public String updateToken(String token) throws IOException, URISyntaxException, TokenNotExistException, InternalServerErrorException {
-        byte[] secretKey = secretKeyProvider.getKey();
-        Jws<Claims> claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
-        UserContext user = UserContext.create(userService.findOneByEmail(claims.getBody().getSubject()));
+        TokenDAO tokenDAO = tokenRepository.findOneByToken(token);
+        if (tokenDAO != null) {
+            UserContext user = UserContext.create(tokenDAO.getUser());
+            logger.info("New token returned.");
+            return tokenFor(user);
 
-//        Date expirationDate = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody().getExpiration();
-//        LocalDateTime ldt = LocalDateTime.ofInstant(expirationDate.toInstant(), ZoneId.systemDefault());
-
-//        if (tokenRepository.existByToken(token)) {
-//            tokenRepository.deleteByToken(token);
-//        }
-//        else throw new TokenNotExistException();
-
-
-        logger.info("New token returned.");
-        return tokenFor(user);
-//        } else {
-//            logger.info("Expiration date is OK. ");
-//            return token;
-//        }
+        } else throw new TokenNotExistException();
     }
 }

@@ -1,6 +1,7 @@
 package com.edsson.expopromoter.api.repository;
 
 import com.edsson.expopromoter.api.model.TokenDAO;
+import com.edsson.expopromoter.api.model.User;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -16,4 +17,6 @@ public interface TokenRepository extends CrudRepository<TokenDAO, String> {
     boolean existByToken(@Param("token") String token);
 
     TokenDAO findOneByUser_Id(Long id);
+
+
 }

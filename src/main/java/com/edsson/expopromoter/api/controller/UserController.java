@@ -68,9 +68,14 @@ public class UserController {
             value = "/create_event")
     public JsonUrl createTicket(@RequestBody CreateEventRequest createEventRequest, HttpResponse response, HttpServletRequest request) throws EntityAlreadyExistException, EventBadCredentialsException, ParseException, FileNotFoundException, SystemConfigurationException, IOException, NotFoundException, FailedToUploadImageToAWSException, InternalServerErrorException {
 
-        log.info("/Create_event request");
-        return service.createEventDAO(createEventRequest, (User) request.getAttribute("user"));
-
+        log.info("Create event request");
+        try {
+            return service.createEventDAO(createEventRequest, (User) request.getAttribute("user"));
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            throw new EventBadCredentialsException();
+        }
     }
 
     @RequestMapping(method = RequestMethod.POST,

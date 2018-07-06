@@ -51,7 +51,7 @@ public class JwtFilter extends GenericFilterBean {
         HttpServletResponse httpResponse = (HttpServletResponse) res;
         httpResponse.addHeader("Access-Control-Allow-Origin", "*");
         httpResponse.addHeader("Access-Control-Allow-Methods", "*");
-        httpResponse.addHeader("Access-Control-Allow-Headers", "*");
+        httpResponse.addHeader("Access-Control-Allow-Headers", "authorization, Accept, Content-Type, Accept-Encoding, Accept-Language, Access-Control-Request-Headers, Access-Control-Request-Method" );
         httpResponse.addHeader("Access-Control-Max-Age", "3600");
 
 
@@ -63,6 +63,7 @@ public class JwtFilter extends GenericFilterBean {
         allowedPaths.add("/auth/update_password");
         allowedPaths.add("/auth/device_register");
         allowedPaths.add("/auth/device_login");
+        allowedPaths.add("/auth/update_token");
         allowedPaths.add("/admin/login");
 
         if (allowedPaths.contains(httpRequest.getRequestURI())) {
@@ -119,6 +120,7 @@ public class JwtFilter extends GenericFilterBean {
                 } else {
                     logger.info(new TokenNotExistException());
                     httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+
                     throw new TokenNotExistException();
                 }
 

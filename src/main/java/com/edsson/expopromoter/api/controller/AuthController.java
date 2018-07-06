@@ -102,7 +102,7 @@ public class AuthController {
             logger.info("Successfully registered user with login: " + context.getEmail());
             return JsonUser.from(context);
         } else {
-            logger.error("Failed to login with name: " + name);
+
             throw new FailedToLoginException(name);
         }
     }
@@ -279,7 +279,7 @@ public class AuthController {
             jsonToken = JsonToken.create(jwtUtil.updateToken(token));
         }
         catch (Exception e){
-            logger.error(new RefreshTokenException());
+            logger.error("Refresh token exception", e);
             throw new RefreshTokenException();
 
         }
