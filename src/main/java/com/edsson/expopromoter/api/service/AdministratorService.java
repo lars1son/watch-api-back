@@ -48,8 +48,8 @@ public class AdministratorService {
     }
 
     public void deleteEvent(int id, User user) throws PrivilegiousException, NoSuchEventPerUserException {
-        EventDAO eventDAO = eventService.findOneById(id);
-        eventService.deleteEvent(id, eventDAO.getUserCreatorId());
+
+        eventService.deleteEvent(id, user);
     }
 
     public List<JsonEventInfo> getEventList(int page) throws InternalServerErrorException {

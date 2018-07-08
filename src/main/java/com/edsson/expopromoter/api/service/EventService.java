@@ -7,7 +7,6 @@ import com.edsson.expopromoter.api.model.EventDAO;
 import com.edsson.expopromoter.api.model.GpsDAO;
 import com.edsson.expopromoter.api.model.User;
 import com.edsson.expopromoter.api.model.json.JsonEventInfo;
-import com.edsson.expopromoter.api.model.json.JsonPageCount;
 import com.edsson.expopromoter.api.model.json.JsonUrl;
 import com.edsson.expopromoter.api.operator.ImageOperator;
 import com.edsson.expopromoter.api.repository.EventRepository;
@@ -24,7 +23,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.NonUniqueResultException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.text.ParseException;
@@ -43,6 +41,7 @@ public class EventService {
     private final UserService userService;
     private final SystemConfigurationServiceImpl systemConfigurationService;
     private final AmazonClient amazonClient;
+
     private final GPSRepository gpsRepository;
     @Value("${expopromoter.system.configuration.admin.page_size}")
     private String pageSize;
@@ -50,6 +49,7 @@ public class EventService {
     @Autowired
     public EventService(GPSRepository gpsRepository, AmazonClient amazonClient, EventRepository eventRepository, SystemConfigurationServiceImpl systemConfigurationService, UserService userService, ImageOperator imageOperator) {
         this.repository = eventRepository;
+
         this.amazonClient = amazonClient;
         this.imageOperator = imageOperator;
         this.gpsRepository = gpsRepository;
@@ -69,14 +69,14 @@ public class EventService {
 
 
         List<EventDAO> list = repository.findListByName(createEventRequest.getName());
-        if (list != null) {
-            for (EventDAO eventDAO : list) {
-                if (eventDAO.getUserCreatorId().getId() == user.getId()) {
-                    logger.error("Entity has already exist exception");
-                    throw new EntityAlreadyExistException();
-                }
-            }
-        }
+//        if (list != null) {
+//            for (EventDAO eventDAO : list) {
+//                if (eventDAO.getUserCreatorId().getId() == user.getId()) {
+//                    logger.error("Entity has already exist exception");
+//                    throw new EntityAlreadyExistException();
+//                }
+//            }
+//        }
 
 
         EventDAO eventDAO = new EventDAO();
@@ -94,28 +94,32 @@ public class EventService {
         eventDAO.setEventLocation(createEventRequest.getLocation());
         eventDAO.setEventWebsite(createEventRequest.getWebsite());
         eventDAO.setTicketUrl(createEventRequest.getTicketUrl());
-        eventDAO.setUserCreatorId(user);
+        eventDAO.setUserCreatorId(user.getId());
 
-        user.addToEventDAOList(eventDAO);
+        eventDAO.getUsers().add(user);
+        user.getEvents().add(eventDAO);
+
         try {
-
-            repository.save(eventDAO);
+            userService.save(user);
+//            repository.save(eventDAO);
 
         } catch (Exception e) {
             e.printStackTrace();
             throw new InternalServerErrorException();
         }
         logger.info("New event saved! ");
-        try {
-            list = repository.findListByName(eventDAO.getName());
-            for (EventDAO eventDAO1 : list) {
-                if (eventDAO.getUserCreatorId().getId() == eventDAO1.getUserCreatorId().getId()) ;
-                eventDAO = eventDAO1;
-            }
-        } catch (NonUniqueResultException exception) {
-            logger.error("NonUniqueResultException",exception);
-            throw new EntityAlreadyExistException();
-        }
+
+
+//        try {
+//            list = repository.findListByName(eventDAO.getName());
+//            for (EventDAO eventDAO1 : list) {
+//                if (eventDAO.getUserCreatorId().getId() == eventDAO1.getUserCreatorId().getId()) ;
+//                eventDAO = eventDAO1;
+//            }
+//        } catch (NonUniqueResultException exception) {
+//            logger.error("NonUniqueResultException", exception);
+//            throw new EntityAlreadyExistException();
+//        }
 
         eventDAO.setEventInfoUrl(systemConfigurationService.getValueByKey(SystemConfigurationKeys.EventInfoURL.URL) + eventDAO.getId());
 
@@ -129,7 +133,7 @@ public class EventService {
         }
 
         userService.save(user);
-        logger.info("New event created: [ " + eventDAO.getName() + ", "+ eventDAO.getDateStart() + " ,"+ eventDAO.getDateEnd() + ", "+ eventDAO.getEventInfoUrl()+"]");
+        logger.info("New event created: [ " + eventDAO.getName() + ", " + eventDAO.getDateStart() + " ," + eventDAO.getDateEnd() + ", " + eventDAO.getEventInfoUrl() + "]");
         return new JsonUrl(eventDAO.getPhotoPath(), eventDAO.getInfoPhotoPath(), eventDAO.getId(), eventDAO.getEventInfoUrl());
     }
 
@@ -140,9 +144,9 @@ public class EventService {
         if (user != null) {
 
             EventDAO savedEvent = repository.findById(eventDAO.getId());
-            if (user.getEventDAOList().contains(savedEvent) || user.getRole().getRole().equals("ROLE_ADMIN")) {
-
-                user.deleteRecordFromEventDAOList(savedEvent);
+            if (savedEvent.getUserCreatorId() == user.getId() || user.getRole().getRole().equals("ROLE_ADMIN"))
+           {
+//                user.deleteRecordFromEventDAOList(savedEvent);
 
                 if (eventDAO.getTicketUrl() != null) {
                     savedEvent.setTicketUrl(eventDAO.getTicketUrl());
@@ -184,16 +188,12 @@ public class EventService {
                 save(savedEvent);
 //                user.addToEventDAOList(savedEvent);
 //                userService.save(user);
+               logger.info("Event update success!");
                 return new JsonUrl(savedEvent.getPhotoPath(), savedEvent.getInfoPhotoPath(), savedEvent.getId(), savedEvent.getEventInfoUrl());
             } else
-                throw new NotFoundException("User " + user.getEmail() + " does not have event: '" + savedEvent.getName() + "'!");
+                throw new NotFoundException("User " + user.getEmail() + " does not have permissions to edit event: '" + savedEvent.getName() + "'!");
         } else throw new NotFoundException("User " + user.getEmail() + " not found!");
     }
-
-//
-//    public String buildUrl(int id) throws SystemConfigurationException {
-//        return systemConfigurationService.getValueByKey(SystemConfigurationKeys.EventInfoURL.URL) + id;
-//    }
 
 
     public JsonEventInfo buildWithImage(EventDAO eventDAO) throws IOException {
@@ -207,14 +207,9 @@ public class EventService {
     public List<JsonEventInfo> getUpdatedEvent(GetUpdatedEventsRequest getUpdatedEventsRequest, Long id) throws ParseException {
         SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
         List<JsonEventInfo> result = new ArrayList<>();
-//
-//        List<EventDAO> eventDAOS = repository.findByIdAndUpdatedAtAfter(id, formatter.parse(getUpdatedEventsRequest.getLastUpdate()));
-//        for (EventDAO eventDAO : eventDAOS) {
-//            result.add(JsonEventInfo.from(eventDAO));
-//        }
-//        return result;
+
         User user = userService.findOneById(id);
-        for (EventDAO eventDAO : user.getEventDAOList()) {
+        for (EventDAO eventDAO : user.getEvents()) {
             if (eventDAO.getUpdatedAt().after(formatter.parse(getUpdatedEventsRequest.getLastUpdate()))) {
                 result.add(JsonEventInfo.from(eventDAO));
             }
@@ -227,17 +222,19 @@ public class EventService {
         if (eventDAO == null) {
             throw new NoSuchEventPerUserException();
         }
-        for (EventDAO event : user.getEventDAOList()) {
-            if (eventDAO.equals(event)) {
+        if (user.getRole().equals("ROLE_ADMIN")) {
 
+            repository.removeEventDAOById(id);
+
+        } else if (user.getEvents().contains(eventDAO)) {
+            if (eventDAO.getUserCreatorId() == user.getId()) {
                 repository.removeEventDAOById(id);
             }
+        } else {
+            user.getEvents().remove(eventDAO);
         }
-//        if (user.getEventDAOList().contains(eventDAO)) {
-//            repository.removeEventDAOById(id);
-//        } else {
 
-//        }
+
     }
 
     public void createGPS(AddGPSRequest gpsRequest, User user) {
@@ -259,7 +256,7 @@ public class EventService {
 
     }
 
-    public double pageCount(){
-        return  (Math.ceil(Double.valueOf(repository.count())/Double.valueOf(pageSize)));
+    public double pageCount() {
+        return (Math.ceil(Double.valueOf(repository.count()) / Double.valueOf(pageSize)));
     }
 }

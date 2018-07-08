@@ -8,6 +8,7 @@ import com.edsson.expopromoter.api.model.json.JsonTicket;
 import com.edsson.expopromoter.api.model.json.JsonToken;
 import com.edsson.expopromoter.api.model.json.JsonUrl;
 import com.edsson.expopromoter.api.operator.ImageOperator;
+import com.edsson.expopromoter.api.request.AddOtherEventRequest;
 import com.edsson.expopromoter.api.request.CreateEventRequest;
 import com.edsson.expopromoter.api.request.UserUpdateRequest;
 import com.edsson.expopromoter.api.service.EventService;
@@ -83,6 +84,7 @@ public class UserController {
             value = "/update_event")
     public JsonUrl updateEvent(@RequestBody CreateEventRequest createEventRequest, HttpServletRequest request, HttpResponse response) throws ParseException, EventBadCredentialsException, NotFoundException, IOException, SystemConfigurationException, FailedToUploadImageToAWSException {
 //        response.setHeader("Token", (String) request.getAttribute("Token"));
+        log.info("Update event request");
         return service.update(createEventRequest, request);
 
     }
@@ -97,6 +99,13 @@ public class UserController {
     @RequestMapping(method = RequestMethod.POST, value = "/update_user_info")
     public GenericResponse updateUser(@RequestBody UserUpdateRequest userUpdateRequest, HttpServletRequest request, HttpResponse response) throws IOException, IllegalAccessException, NoSuchMethodException, InvocationTargetException, InstantiationException {
         userService.update(userUpdateRequest, (User) request.getAttribute("user"));
+//        return new GenericResponse("User update success", new String[]{});
+        return new GenericResponse(new String[]{});
+    }
+
+    @RequestMapping(method = RequestMethod.POST, value = "/add_event")
+    public GenericResponse addEvent(@RequestBody AddOtherEventRequest addOtherEventRequest, HttpServletRequest request, HttpResponse response) throws IOException, IllegalAccessException, NoSuchMethodException, InvocationTargetException, InstantiationException, EntityNotFoundException {
+        userService.addEvent(addOtherEventRequest.getId(), (User) request.getAttribute("user"));
 //        return new GenericResponse("User update success", new String[]{});
         return new GenericResponse(new String[]{});
     }

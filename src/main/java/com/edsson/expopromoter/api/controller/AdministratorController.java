@@ -87,7 +87,7 @@ public class AdministratorController {
             produces = APPLICATION_JSON_VALUE,
             consumes = {APPLICATION_JSON_VALUE}
     )
-    public GenericResponse login(@RequestBody DeleteEventRequest deleteEventRequest,
+    public GenericResponse deleteEvent(@RequestBody DeleteEventRequest deleteEventRequest,
                                  BindingResult bindingResult,
                                  HttpServletResponse response,
                                  HttpServletRequest request) throws RequestValidationException, FailedToLoginException, PrivilegiousException, NoSuchEventPerUserException {

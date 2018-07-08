@@ -43,7 +43,8 @@ public class UserService {
     private final MailSender mailSender;
     private final SystemConfigurationService systemConfigurationService;
     private final PasswordTokenRepository passwordTokenRepository;
-//    private final EventService eventService;
+
+    //    private final EventService eventService;
     @Autowired
     public UserService(EventRepository eventRepository,
                        PasswordTokenRepository passwordTokenRepository, SystemConfigurationServiceImpl systemConfigurationService, MailSender mailSender, UserRepository userRepository, RoleService roleService, BCryptPasswordEncoder bCryptPasswordEncoder, ImageOperator imageOperator) {
@@ -54,7 +55,7 @@ public class UserService {
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.mailSender = mailSender;
         this.passwordTokenRepository = passwordTokenRepository;
-        this.eventRepository=eventRepository;
+        this.eventRepository = eventRepository;
     }
 
     /**
@@ -79,8 +80,7 @@ public class UserService {
         if (user != null) {
 
             return UserContext.create(user);
-        }
-        else {
+        } else {
             throw new NoSuchUserException();
         }
     }
@@ -239,12 +239,22 @@ public class UserService {
 //        repository.save(user);
 //        repository.save(newUser);
 //
-        for (EventDAO eventDAO : user.getEventDAOList()) {
-            eventDAO.setUserCreatorId(newUser);
+        for (EventDAO eventDAO : user.getEvents()) {
+            eventDAO.setUserCreatorId(newUser.getId());
             eventRepository.save(eventDAO);
         }
 
 
+    }
+
+    public void addEvent(int id, User user) throws EntityNotFoundException {
+        EventDAO eventDAO = eventRepository.findById(id);
+        if (eventDAO != null) {
+            user.getEvents().add(eventDAO);
+        }
+        else {
+            throw new EntityNotFoundException();
+        }
     }
 }
 
